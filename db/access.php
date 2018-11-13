@@ -49,7 +49,7 @@ $capabilities = array(
         'clonepermissionsfrom' => 'moodle/course:manageactivities'
     ),
 
-    'mod/peer:bereviewed' => array(
+    'mod/grouppeerreview:bereviewed' => array(
         'captype' => 'write',
         'contextlevel' => CONTEXT_MODULE,
         'archetypes' => array(
@@ -57,7 +57,7 @@ $capabilities = array(
         ),
     ),
 
-    'mod/peer:review' => array(
+    'mod/grouppeerreview:review' => array(
         'riskbitmask' => RISK_XSS,
         'captype' => 'write',
         'contextlevel' => CONTEXT_MODULE,
@@ -69,7 +69,7 @@ $capabilities = array(
         ),
     ),
 
-    'mod/peer:deleteresponses' => array(
+    'mod/grouppeerreview:deleteresponses' => array(
     'riskbitmask' => RISK_XSS,
     'captype' => 'write',
     'contextlevel' => CONTEXT_MODULE,
