@@ -21,7 +21,7 @@
     $PAGE->set_url($url);
    //$PAGE->set_pagelayout('base');
 
-    if (! $cm = get_coursemodule_from_id('peer', $id)) {
+    if (! $cm = get_coursemodule_from_id('grouppeerreview', $id)) {
         print_error("invalidcoursemodule");
     }
 
@@ -33,9 +33,9 @@
 
     $context = context_module::instance($cm->id);
 
-    require_capability('mod/peer:readresponses', $context);
+    require_capability('mod/grouppeerreview:readresponses', $context);
 
-    if (!$peer = peer_get_peer($cm->instance)) {
+    if (!$peer = grouppeerreview_get_peer($cm->instance)) {
         print_error('invalidcoursemodule');
     }
 
@@ -52,7 +52,7 @@
     //$event = \mod_peer\event\report_viewed::create($eventdata);
     //$event->trigger();
 
-    if (data_submitted() && has_capability('mod/peer:deleteresponses', $context) && confirm_sesskey()) {
+    if (data_submitted() && has_capability('mod/grouppeerreview:deleteresponses', $context) && confirm_sesskey()) {
         if ($action === 'save_grades') {
             foreach( $grades as $k=>$g) {
                 if(is_numeric($g)) {
@@ -61,19 +61,19 @@
                     unset($grades[$k]);
                 }
             }
-            peer_grade_item_update($peer, $grades);
+            grouppeerreview_grade_item_update($peer, $grades);
             redirect("report.php?id=$cm->id&groupid=$groupid");
         }
 
         if ($action === 'delete') {
             // Delete responses of other users.
-            peer_delete_responses($attemptids, $peer, $cm, $course);
+            grouppeerreview_delete_responses($attemptids, $peer, $cm, $course);
             redirect("report.php?id=$cm->id");
         }
         if (preg_match('/^choose_(\d+)$/', $action, $actionmatch)) {
             // Modify responses of other users.
             $newoptionid = (int)$actionmatch[1];
-            peer_modify_responses($userids, $attemptids, $newoptionid, $peer, $cm, $course);
+            grouppeerreview_modify_responses($userids, $attemptids, $newoptionid, $peer, $cm, $course);
             redirect("report.php?id=$cm->id");
         }
     }
@@ -100,7 +100,7 @@
         $eventdata['other']['content'] = 'peerreportcontentviewed';
         $eventdata['other']['format'] = $download;
         $eventdata['other']['peerid'] = $peer->id;
-        $event = \mod_peer\event\report_downloaded::create($eventdata);
+        $event = \mod_grouppeerreview\event\report_downloaded::create($eventdata);
         $event->trigger();
     }
 
@@ -108,10 +108,10 @@
 
     $groups = groups_get_all_groups($course->id, 0, $peer->grouping, 'g.id, g.name');
 
-    $renderer = $PAGE->get_renderer('mod_peer');
+    $renderer = $PAGE->get_renderer('mod_grouppeerreview');
 
     echo "\r\n" . '<h5>Completion summary</h5>';
-    echo "\r\n" . '<p>'.get_string('weighting', 'peer').': <strong>'.$peer->weighting.'%</strong></p>';
+    echo "\r\n" . '<p>'.get_string('weighting', 'grouppeerreview').': <strong>'.$peer->weighting.'%</strong></p>';
     echo $renderer->group_completion_summary($peer);
 
     echo "\r\n" . '<form action="report.php" method="get">';
@@ -122,13 +122,13 @@
     if( isset($groupid) ) {
 
         $members = groups_get_members($groupid, 'u.id, u.firstname, u.lastname' );
-        $gradebook_grades = peer_get_grade_items($peer, array_column($members, 'id'));
+        $gradebook_grades = grouppeerreview_get_grade_items($peer, array_column($members, 'id'));
 
-        $groupmark = peer_get_group_mark($peer, $members);
+        $groupmark = grouppeerreview_get_group_mark($peer, $members);
         $maxgrade = $DB->get_field( 'assign', 'grade', array('id'=>$peer->assignid));
 
         echo "\r\n" . '<h5>Group results</h5>';
-        echo "\r\n" . '<p>'.get_string('groupmark', 'peer').': <strong>';
+        echo "\r\n" . '<p>'.get_string('groupmark', 'grouppeerreview').': <strong>';
         if( is_numeric($groupmark) ) {
             echo floatval($groupmark);
             $automatic_mark = $groupmark * $peer->weighting / $maxgrade;
@@ -146,11 +146,11 @@
         echo "\r\n" . '<table class="generaltable">';
         echo "\r\n" . '<tr><th>Student</th><th>Grades received</th><th>Adjustment</th><th>Calculated</th><th>Final mark</th></tr>';
         foreach( $members as $member) {
-            if( has_capability('mod/peer:bereviewed', $context, $member->id)) {
+            if( has_capability('mod/grouppeerreview:bereviewed', $context, $member->id)) {
 
                 echo "\r\n" . '<tr><td><a href="'.$CFG->wwwroot.'/user/view.php?id='.$member->id.'&course='.$course->id.'">'.$member->firstname.' '.$member->lastname.'</a></td>';
 
-                $grades = peer_get_group_member_grades($peer, $groupid, $member->id);
+                $grades = grouppeerreview_get_group_member_grades($peer, $groupid, $member->id);
                 $peer_grades = 0;
                 $peer_total = 0;
 
@@ -195,7 +195,7 @@
     }
 
    //now give links for downloading spreadsheets.
-    if (!empty($users) && has_capability('mod/peer:downloadresponses',$context)) {
+    if (!empty($users) && has_capability('mod/grouppeerreview:downloadresponses',$context)) {
         $downloadoptions = array();
         $options = array();
         $options["id"] = "$cm->id";

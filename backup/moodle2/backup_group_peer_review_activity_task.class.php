@@ -16,9 +16,9 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Defines backup_peer_activity_task class
+ * Defines backup_grouppeerreview_activity_task class
  *
- * @package     mod_peer
+ * @package     mod_grouppeerreview
  * @category    backup
  * @copyright   2010 onwards Eloy Lafuente (stronk7) {@link http://stronk7.com}
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -26,12 +26,12 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/mod/peer/backup/moodle2/backup_peer_stepslib.php');
+require_once($CFG->dirroot . '/mod/peer/backup/moodle2/backup_grouppeerreview_stepslib.php');
 
 /**
  * Provides the steps to perform one complete backup of the peer instance
  */
-class backup_peer_activity_task extends backup_activity_task {
+class backup_grouppeerreview_activity_task extends backup_activity_task {
 
     /**
      * No specific settings for this activity
@@ -43,7 +43,7 @@ class backup_peer_activity_task extends backup_activity_task {
      * Defines a backup step to store the instance data in the peer.xml file
      */
     protected function define_my_steps() {
-        $this->add_step(new backup_peer_activity_structure_step('peer_structure', 'peer.xml'));
+        $this->add_step(new backup_grouppeerreview_activity_structure_step('grouppeerreview_structure', 'grouppeerreview.xml'));
     }
 
     /**
@@ -57,11 +57,11 @@ class backup_peer_activity_task extends backup_activity_task {
 
         $base = preg_quote($CFG->wwwroot,"/");
 
-        // Link to the list of peers
+        // Link to the list of grouppeerreviews
         $search="/(".$base."\/mod\/peer\/index.php\?id\=)([0-9]+)/";
         $content= preg_replace($search, '$@PEERINDEX*$2@$', $content);
 
-        // Link to peer view by moduleid
+        // Link to grouppeerreview view by moduleid
         $search="/(".$base."\/mod\/peer\/view.php\?id\=)([0-9]+)/";
         $content= preg_replace($search, '$@PEERVIEWBYID*$2@$', $content);
 

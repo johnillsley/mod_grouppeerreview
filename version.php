@@ -15,9 +15,9 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Simple Peer Review
+ * Group Peer Review
  *
- * @package mod_peer
+ * @package mod_grouppeerreview
  * @author     John Illsley
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -26,5 +26,5 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->version   = 2018053010;       // The current module version (Date: YYYYMMDDXX)
 $plugin->requires  = 2017110800;    // Requires this Moodle version
-$plugin->component = 'mod_peer';   // Full name of the plugin (used for diagnostics)
+$plugin->component = 'mod_grouppeerreview';   // Full name of the plugin (used for diagnostics)
 $plugin->cron      = 0;

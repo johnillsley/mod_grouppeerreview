@@ -10,13 +10,13 @@ $attemptids = optional_param_array('attemptid', array(), PARAM_INT); // Get arra
 $userids    = optional_param_array('userid', array(), PARAM_INT); // Get array of users whose peers reviews need to be modified.
 $notify     = optional_param('notify', '', PARAM_ALPHA);
 
-$url = new moodle_url('/mod/peer/view.php', array('id'=>$id));
+$url = new moodle_url('/mod/grouppeerreview/view.php', array('id'=>$id));
 if ($action !== '') {
     $url->param('action', $action);
 }
 $PAGE->set_url($url);
 
-if (! $cm = get_coursemodule_from_id('peer', $id)) {
+if (! $cm = get_coursemodule_from_id('grouppeerreview', $id)) {
     print_error('invalidcoursemodule');
 }
 
@@ -26,22 +26,22 @@ if (! $course = $DB->get_record("course", array("id" => $cm->course))) {
 
 require_course_login($course, false, $cm);
 
-if (!$peer = $DB->get_record("peer", array("id" => $cm->instance))) {
+if (!$peer = $DB->get_record("grouppeerreview", array("id" => $cm->instance))) {
     print_error('invalidcoursemodule');
 }
 
-$strpeer = get_string('modulename', 'peer');
-$strpeers = get_string('modulenameplural', 'peer');
+$strpeer = get_string('modulename', 'grouppeerreview');
+$strpeers = get_string('modulenameplural', 'grouppeerreview');
 
 $context = context_module::instance($cm->id);
 
 list($peeravailable, $warnings) = peer_get_availability_status($peer);
 
-if ($action == 'delpeer' and confirm_sesskey() and is_enrolled($context, NULL, 'mod/peer:review') and $peer->allowupdate
+if ($action == 'delpeer' and confirm_sesskey() and is_enrolled($context, NULL, 'mod/grouppeerreview:review') and $peer->allowupdate
         and $peeravailable) {
-    $answercount = $DB->count_records('peer_answers', array('peerid' => $peer->id, 'userid' => $USER->id));
+    $answercount = $DB->count_records('grouppeerreview_answers', array('peerid' => $peer->id, 'userid' => $USER->id));
     if ($answercount > 0) {
-        $peeranswers = $DB->get_records('peer_answers', array('peerid' => $peer->id, 'userid' => $USER->id),
+        $peeranswers = $DB->get_records('grouppeerreview_answers', array('peerid' => $peer->id, 'userid' => $USER->id),
             '', 'id');
         $todelete = array_keys($peeranswers);
         peer_delete_responses($todelete, $peer, $cm, $course);
@@ -55,22 +55,22 @@ $PAGE->set_heading($course->fullname);
 /// Submit any new data if there is any
 if (data_submitted() && !empty($action) && confirm_sesskey()) {
     $timenow = time();
-    if (has_capability('mod/peer:deleteresponses', $context)) {
+    if (has_capability('mod/grouppeerreview:deleteresponses', $context)) {
         if ($action === 'delete') {
             // Some responses need to be deleted.
-            peer_delete_responses($attemptids, $peer, $cm, $course);
+            grouppeerreview_delete_responses($attemptids, $peer, $cm, $course);
             redirect("view.php?id=$cm->id");
         }
         if (preg_match('/^choose_(\d+)$/', $action, $actionmatch)) {
             // Modify responses of other users.
             $newoptionid = (int)$actionmatch[1];
-            peer_modify_responses($userids, $attemptids, $newoptionid, $peer, $cm, $course);
+            grouppeerreview_modify_responses($userids, $attemptids, $newoptionid, $peer, $cm, $course);
             redirect("view.php?id=$cm->id");
         }
     }
-    if (has_capability('mod/peer:deleteresponses', $context)) {
+    if (has_capability('mod/grouppeerreview:deleteresponses', $context)) {
         $reviews = $_POST["review"]; //TODO - this should be validated like all other POST variables
-        $is_complete = peer_user_submit_response($reviews, $peer, $USER->id);
+        $is_complete = grouppeerreview_user_submit_response($reviews, $peer, $USER->id);
 
         // Update completion state
         $completion=new completion_info($course);
@@ -80,7 +80,7 @@ if (data_submitted() && !empty($action) && confirm_sesskey()) {
             $completion->update_state($cm,COMPLETION_INCOMPLETE);
         }
 
-        redirect(new moodle_url('/mod/peer/view.php',
+        redirect(new moodle_url('/mod/grouppeerreview/view.php',
             array('id' => $cm->id, 'notify' => 'peersaved', 'sesskey' => sesskey())));
     }
 /*
@@ -93,12 +93,12 @@ if (data_submitted() && !empty($action) && confirm_sesskey()) {
 
     if (!$peeravailable) {
         $reason = current(array_keys($warnings));
-        throw new moodle_exception($reason, 'peer', '', $warnings[$reason]);
+        throw new moodle_exception($reason, 'grouppeerreview', '', $warnings[$reason]);
     }
 */
 
 
-    if ($reviews && is_enrolled($context, null, 'mod/peer:review')) {
+    if ($reviews && is_enrolled($context, null, 'mod/grouppeerreview:review')) {
 
 
     }
@@ -112,9 +112,9 @@ echo $OUTPUT->heading(format_string($peer->name), 2, null);
 
 if ($notify and confirm_sesskey()) {
     if ($notify === 'peersaved') {
-        echo $OUTPUT->notification(get_string('peersaved', 'peer'), 'notifysuccess');
+        echo $OUTPUT->notification(get_string('peersaved', 'grouppeerreview'), 'notifysuccess');
     } else if ($notify === 'mustchooseone') {
-        echo $OUTPUT->notification(get_string('mustchooseone', 'peer'), 'notifyproblem');
+        echo $OUTPUT->notification(get_string('mustchooseone', 'grouppeerreview'), 'notifyproblem');
     }
 }
 
@@ -128,7 +128,7 @@ $groupmode = groups_get_activity_groupmode($cm);
 
 if ($groupmode) {
     groups_get_activity_group($cm, true);
-    groups_print_activity_menu($cm, $CFG->wwwroot . '/mod/peer/view.php?id='.$id);
+    groups_print_activity_menu($cm, $CFG->wwwroot . '/mod/grouppeerreview/view.php?id='.$id);
 }
 
 // Check if we want to include responses from inactive users.
@@ -136,7 +136,7 @@ if ($groupmode) {
 
 $allresponses = peer_get_response_data($peer, $cm);
 
-if (has_capability('mod/peer:readresponses', $context)) {
+if (has_capability('mod/grouppeerreview:readresponses', $context)) {
     peer_show_reportlink($allresponses, $cm, $peer);
 }
 
@@ -144,7 +144,7 @@ echo '<div class="clearer"></div>';
 
 if ($peer->intro) {
     $peer->introformat = FORMAT_HTML;
-    echo $OUTPUT->box(format_module_intro('peer', $peer, $cm->id), 'generalbox', 'intro');
+    echo $OUTPUT->box(format_module_intro('grouppeerreview', $peer, $cm->id), 'generalbox', 'intro');
 }
 
 $timenow = time();
@@ -164,14 +164,14 @@ if (isloggedin() && (!empty($current)) &&
 $peeropen = true;
 if ((!empty($peer->timeopen)) && ($peer->timeopen > $timenow)) {
     if ($peer->showpreview) {
-        echo $OUTPUT->box(get_string('previewonly', 'peer', userdate($peer->timeopen)), 'generalbox alert');
+        echo $OUTPUT->box(get_string('previewonly', 'grouppeerreview', userdate($peer->timeopen)), 'generalbox alert');
     } else {
-        echo $OUTPUT->box(get_string("notopenyet", "peer", userdate($peer->timeopen)), "generalbox notopenyet");
+        echo $OUTPUT->box(get_string("notopenyet", "grouppeerreview", userdate($peer->timeopen)), "generalbox notopenyet");
         echo $OUTPUT->footer();
         exit;
     }
 } else if ((!empty($peer->timeclose)) && ($timenow > $peer->timeclose)) {
-    echo $OUTPUT->box(get_string("expired", "peer", userdate($peer->timeclose)), "generalbox expired");
+    echo $OUTPUT->box(get_string("expired", "grouppeerreview", userdate($peer->timeclose)), "generalbox expired");
     $peeropen = false;
 }
 
@@ -179,7 +179,7 @@ if ((!empty($peer->timeopen)) && ($peer->timeopen > $timenow)) {
 // They haven't made their peer yet or updates allowed and peer is open
 
     $options = peer_prepare_options($peer, $USER);
-    $renderer = $PAGE->get_renderer('mod_peer');
+    $renderer = $PAGE->get_renderer('mod_grouppeerreview');
     echo $renderer->display_options($options, $cm->id);
     $peerformshown = true;
     /*
@@ -192,7 +192,7 @@ if (!$peerformshown) {
 
     if (isguestuser()) {
         // Guest account
-        echo $OUTPUT->confirm(get_string('noguestchoose', 'peer').'<br /><br />'.get_string('liketologin'),
+        echo $OUTPUT->confirm(get_string('noguestchoose', 'grouppeerreview').'<br /><br />'.get_string('liketologin'),
                      get_login_url(), new moodle_url('/course/view.php', array('id'=>$course->id)));
     } else if (!is_enrolled($context)) {
         // Only people enrolled can make a peer
@@ -203,7 +203,7 @@ if (!$peerformshown) {
         $courseshortname = format_string($course->shortname, true, array('context' => $coursecontext));
 
         echo $OUTPUT->box_start('generalbox', 'notice');
-        echo '<p align="center">'. get_string('notenrolledchoose', 'peer') .'</p>';
+        echo '<p align="center">'. get_string('notenrolledchoose', 'grouppeerreview') .'</p>';
         echo $OUTPUT->container_start('continuebutton');
         echo $OUTPUT->single_button(new moodle_url('/enrol/index.php?', array('id'=>$course->id)), get_string('enrolme', 'core_enrol', $courseshortname));
         echo $OUTPUT->container_end();
@@ -213,14 +213,14 @@ if (!$peerformshown) {
 }
 
 // print the results at the bottom of the screen
-if (peer_can_view_results($peer, $current, $peeropen)) {
-    $results = prepare_peer_show_results($peer, $course, $cm, $allresponses);
-    $renderer = $PAGE->get_renderer('mod_peer');
+if (grouppeerreview_can_view_results($peer, $current, $peeropen)) {
+    $results = prepare_grouppeerreview_show_results($peer, $course, $cm, $allresponses);
+    $renderer = $PAGE->get_renderer('mod_grouppeerreview');
     $resultstable = $renderer->display_result($results);
     echo $OUTPUT->box($resultstable);
 
 } else if (!$peerformshown) {
-    echo $OUTPUT->box(get_string('noresultsviewable', 'peer'));
+    echo $OUTPUT->box(get_string('noresultsviewable', 'grouppeerreview'));
 }
 
 echo $OUTPUT->footer();

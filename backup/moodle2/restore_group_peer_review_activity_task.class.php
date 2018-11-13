@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * @package    mod_peer
+ * @package    mod_grouppeerreview
  * @subpackage backup-moodle2
  * @copyright 2010 onwards Eloy Lafuente (stronk7) {@link http://stronk7.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -24,13 +24,13 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/mod/peer/backup/moodle2/restore_peer_stepslib.php'); // Because it exists (must)
+require_once($CFG->dirroot . '/mod/peer/backup/moodle2/restore_grouppeerreview_stepslib.php'); // Because it exists (must)
 
 /**
- * peer restore task that provides all the settings and steps to perform one
+ * grouppeerreview restore task that provides all the settings and steps to perform one
  * complete restore of the activity
  */
-class restore_peer_activity_task extends restore_activity_task {
+class restore_grouppeerreview_activity_task extends restore_activity_task {
 
     /**
      * Define (add) particular settings this activity can have
@@ -44,7 +44,7 @@ class restore_peer_activity_task extends restore_activity_task {
      */
     protected function define_my_steps() {
         // peer only has one structure step
-        $this->add_step(new restore_peer_activity_structure_step('peer_structure', 'peer.xml'));
+        $this->add_step(new restore_peer_activity_structure_step('grouppeerreview_structure', 'grouppeerreview.xml'));
     }
 
     /**
@@ -54,7 +54,7 @@ class restore_peer_activity_task extends restore_activity_task {
     static public function define_decode_contents() {
         $contents = array();
 
-        $contents[] = new restore_decode_content('peer', array('intro'), 'peer');
+        $contents[] = new restore_decode_content('grouppeerreview', array('intro'), 'grouppeerreview');
 
         return $contents;
     }
@@ -66,8 +66,8 @@ class restore_peer_activity_task extends restore_activity_task {
     static public function define_decode_rules() {
         $rules = array();
 
-        $rules[] = new restore_decode_rule('PEERVIEWBYID', '/mod/peer/view.php?id=$1', 'course_module');
-        $rules[] = new restore_decode_rule('PEERINDEX', '/mod/peer/index.php?id=$1', 'course');
+        $rules[] = new restore_decode_rule('PEERVIEWBYID', '/mod/grouppeerreview/view.php?id=$1', 'course_module');
+        $rules[] = new restore_decode_rule('PEERINDEX', '/mod/grouppeerreview/index.php?id=$1', 'course');
 
         return $rules;
 
@@ -82,10 +82,10 @@ class restore_peer_activity_task extends restore_activity_task {
     static public function define_restore_log_rules() {
         $rules = array();
 
-        $rules[] = new restore_log_rule('peer', 'add', 'view.php?id={course_module}', '{peer}');
-        $rules[] = new restore_log_rule('peer', 'update', 'view.php?id={course_module}', '{peer}');
-        $rules[] = new restore_log_rule('peer', 'view', 'view.php?id={course_module}', '{peer}');
-        $rules[] = new restore_log_rule('peer', 'report', 'report.php?id={course_module}', '{peer}');
+        $rules[] = new restore_log_rule('grouppeerreview', 'add', 'view.php?id={course_module}', '{peer}');
+        $rules[] = new restore_log_rule('grouppeerreview', 'update', 'view.php?id={course_module}', '{peer}');
+        $rules[] = new restore_log_rule('grouppeerreview', 'view', 'view.php?id={course_module}', '{peer}');
+        $rules[] = new restore_log_rule('grouppeerreview', 'report', 'report.php?id={course_module}', '{peer}');
 
         return $rules;
     }
@@ -104,9 +104,9 @@ class restore_peer_activity_task extends restore_activity_task {
         $rules = array();
 
         // Fix old wrong uses (missing extension)
-        $rules[] = new restore_log_rule('peer', 'view all', 'index?id={course}', null,
+        $rules[] = new restore_log_rule('grouppeerreview', 'view all', 'index?id={course}', null,
                                         null, null, 'index.php?id={course}');
-        $rules[] = new restore_log_rule('peer', 'view all', 'index.php?id={course}', null);
+        $rules[] = new restore_log_rule('grouppeerreview', 'view all', 'index.php?id={course}', null);
 
         return $rules;
     }

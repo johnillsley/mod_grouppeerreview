@@ -15,19 +15,19 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Moodle renderer used to display special elements of the peer review module
+ * Moodle renderer used to display special elements of the grouppeerreview module
  *
- * @package   mod_peer
+ * @package   mod_grouppeerreview
  * @copyright
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  **/
 define ('DISPLAY_HORIZONTAL_LAYOUT', 0);
 define ('DISPLAY_VERTICAL_LAYOUT', 1);
 
-class mod_peer_renderer extends plugin_renderer_base {
+class mod_grouppeerreview_renderer extends plugin_renderer_base {
 
     /**
-     * Returns HTML to display peer review of option
+     * Returns HTML to display grouppeerreview of option
      * @param object $options
      * @param int  $coursemoduleid
      * @param bool $vertical
@@ -35,7 +35,7 @@ class mod_peer_renderer extends plugin_renderer_base {
      */
     public function display_options($options, $coursemoduleid) {
 
-        $target = new moodle_url('/mod/peer/view.php');
+        $target = new moodle_url('/mod/grouppeerreview/view.php');
         $attributes = array('method'=>'POST', 'action'=>$target);
         $context = context_module::instance($coursemoduleid);
         $disabled = empty($options['previewonly']) ? array() : array('disabled' => 'disabled');
@@ -55,7 +55,7 @@ class mod_peer_renderer extends plugin_renderer_base {
             $table->attributes['class'] = 'generaltable';
 
             foreach($group->members as $member) {
-                if( has_capability('mod/peer:bereviewed', $context, $member->userid)) {
+                if( has_capability('mod/grouppeerreview:bereviewed', $context, $member->userid)) {
                     $select = $this->get_select_grades($member, $group );
                     $comment = $this->get_comment_input($member, $group );
                     $table->data[] = array(
@@ -69,7 +69,7 @@ class mod_peer_renderer extends plugin_renderer_base {
         }
         $html .= html_writer::empty_tag('input', array(
             'type' => 'submit',
-            'value' => get_string('savereview', 'peer'),
+            'value' => get_string('savereview', 'grouppeerreview'),
             'class' => 'btn btn-primary'
         ));
 
@@ -112,13 +112,13 @@ class mod_peer_renderer extends plugin_renderer_base {
 
     public function group_completion_summary($peer) {
 
-        $summary = peer_get_summary($peer);  //TODO - change this so only count mod/peer:bereviewed people being graded
+        $summary = grouppeerreview_get_summary($peer);  //TODO - change this so only count mod/peer:bereviewed people being graded
 
         $output  = "\r\n" . '<table class="generaltable">';
         $output .= "\r\n" . '<tr><th>Group</th><th>Members</th><th>Expected responses</th><th>Actual responses</th><th>Published to gradebook</th></tr>';
         foreach( $summary as $group ) {
 
-            $grades = peer_get_grade_items($peer, explode( ',', $group->users ));
+            $grades = grouppeerreview_get_grade_items($peer, explode( ',', $group->users ));
             $grade_count = 0;
             foreach($grades as $grade) {
                 if( isset($grade->grade) ) {$grade_count++;}

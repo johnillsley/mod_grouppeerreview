@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/peer/db" VERSION="20180530" COMMENT="XMLDB file for Moodle mod/peer"
+<XMLDB PATH="mod/grouppeerreview/db" VERSION="20180530" COMMENT="XMLDB file for Moodle mod/peer"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
   <TABLES>
-    <TABLE NAME="peer_review_assign" COMMENT="mapped assignments">
+    <TABLE NAME="grouppeerreview" COMMENT="mapped assignments">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
@@ -23,7 +23,7 @@
         <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key for peer_review_assign"/>
       </KEYS>
     </TABLE>
-    <TABLE NAME="peer_review_marks" COMMENT="mark assigned by peers">
+    <TABLE NAME="grouppeerreview_marks" COMMENT="mark assigned by peers">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="peerid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>

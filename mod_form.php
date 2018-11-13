@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * print the form to add or edit a peer review instance
+ * print the form to add or edit a grouppeerreview instance
  *
  * @author John Illsley
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
@@ -29,50 +29,50 @@ if (!defined('MOODLE_INTERNAL')) {
 
 require_once($CFG->dirroot.'/course/moodleform_mod.php');
 
-class mod_peer_mod_form extends moodleform_mod {
+class mod_grouppeerreview_mod_form extends moodleform_mod {
 
     public function definition() {
         global $CFG, $DB;
 
-        $editoroptions = peer_get_editor_options();
+        $editoroptions = grouppeerreview_get_editor_options();
 
         $mform    =& $this->_form;
 
         //-------------------------------------------------------------------------------
         $mform->addElement('header', 'general', get_string('general', 'form'));
 
-        $mform->addElement('text', 'name', get_string('name', 'peer'), array('size'=>'64'));
+        $mform->addElement('text', 'name', get_string('name', 'grouppeerreview'), array('size'=>'64'));
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', null, 'required', null, 'client');
         $mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');
 
-        $this->standard_intro_elements(get_string('description', 'peer'));
+        $this->standard_intro_elements(get_string('description', 'grouppeerreview'));
 
         $mform->addElement('select',
             'assignid',
-            get_string('selectassignment', 'peer'),
+            get_string('selectassignment', 'grouppeerreview'),
             $this->get_assignments());
         $mform->addRule('assignid', null, 'required', null, 'client');
 
         $mform->addElement('select',
             'grouping',
-            get_string('selectgrouping', 'peer'),
+            get_string('selectgrouping', 'grouppeerreview'),
             $this->get_groupings());
         $mform->addRule('grouping', null, 'required', null, 'client');
 
         $mform->addElement('select',
             'weighting',
-            get_string('weighting', 'peer'),
+            get_string('weighting', 'grouppeerreview'),
             $this->get_weightings());
         $mform->addRule('weighting', null, 'required', null, 'client');
 
         //-------------------------------------------------------------------------------
         $mform->addElement('header', 'timinghdr', get_string('availability'));
 
-        $mform->addElement('date_time_selector', 'timeopen', get_string('peeropen', 'peer'),
+        $mform->addElement('date_time_selector', 'timeopen', get_string('peeropen', 'grouppeerreview'),
             array('optional' => true));
 
-        $mform->addElement('date_time_selector', 'timeclose', get_string('peerclose', 'peer'),
+        $mform->addElement('date_time_selector', 'timeclose', get_string('peerclose', 'grouppeerreview'),
             array('optional' => true));
 
         //-------------------------------------------------------------------------------
@@ -91,7 +91,7 @@ class mod_peer_mod_form extends moodleform_mod {
             $draftitemid = file_get_submitted_draft_itemid('page_after_submit');
             $default_values['page_after_submit_editor']['text'] =
                                     file_prepare_draft_area($draftitemid, $this->context->id,
-                                    'mod_peer', 'page_after_submit', false,
+                                    'mod_grouppeerreview', 'page_after_submit', false,
                                     $editoroptions,
                                     $default_values['page_after_submit']);
 
@@ -102,7 +102,7 @@ class mod_peer_mod_form extends moodleform_mod {
             $draftitemid = file_get_submitted_draft_itemid('page_after_submit_editor');
 
             // no context yet, itemid not used
-            file_prepare_draft_area($draftitemid, null, 'mod_peer', 'page_after_submit', false);
+            file_prepare_draft_area($draftitemid, null, 'mod_grouppeerreview', 'page_after_submit', false);
             $default_values['page_after_submit_editor']['text'] = '';
             $default_values['page_after_submit_editor']['format'] = editors_get_preferred_format();
             $default_values['page_after_submit_editor']['itemid'] = $draftitemid;
@@ -148,7 +148,7 @@ class mod_peer_mod_form extends moodleform_mod {
         // Check open and close times are consistent.
         if ($data['timeopen'] && $data['timeclose'] &&
                 $data['timeclose'] < $data['timeopen']) {
-            $errors['timeclose'] = get_string('closebeforeopen', 'peer');
+            $errors['timeclose'] = get_string('closebeforeopen', 'grouppeerreview');
         }
         return $errors;
     }
@@ -159,7 +159,7 @@ class mod_peer_mod_form extends moodleform_mod {
         $mform->addElement('checkbox',
                            'completionsubmit',
                            '',
-                           get_string('completionsubmit', 'peer'));
+                           get_string('completionsubmit', 'grouppeerreview'));
         // Enable this completion rule by default.
         $mform->setDefault('completionsubmit', 1);
         return array('completionsubmit');

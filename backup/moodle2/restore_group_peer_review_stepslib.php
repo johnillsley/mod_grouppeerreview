@@ -16,18 +16,18 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * @package    mod_peer
+ * @package    mod_grouppeerreview
  * @subpackage backup-moodle2
  * @copyright 2010 onwards Eloy Lafuente (stronk7) {@link http://stronk7.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 /**
- * Define all the restore steps that will be used by the restore_peer_activity_task
+ * Define all the restore steps that will be used by the restore_grouppeerreview_activity_task
  */
 
 /**
- * Structure step to restore one peer activity
+ * Structure step to restore one grouppeerreview activity
  */
 class restore_peer_activity_structure_step extends restore_activity_structure_step {
 
@@ -36,10 +36,10 @@ class restore_peer_activity_structure_step extends restore_activity_structure_st
         $paths = array();
         $userinfo = $this->get_setting_value('userinfo');
 
-        $paths[] = new restore_path_element('peer', '/activity/peer');
+        $paths[] = new restore_path_element('grouppeerreview', '/activity/grouppeerreview');
 
         if ($userinfo) {
-            $paths[] = new restore_path_element('peer_review_mark', '/activity/peer/review_marks/review_mark');
+            $paths[] = new restore_path_element('grouppeerreview_mark', '/activity/grouppeerreview/review_marks/review_mark');
         }
 
         // Return the paths wrapped into standard activity structure
@@ -59,27 +59,27 @@ class restore_peer_activity_structure_step extends restore_activity_structure_st
         $data->timeclose = $this->apply_date_offset($data->timeclose);
 
         // insert the peer record
-        $newitemid = $DB->insert_record('peer', $data);
+        $newitemid = $DB->insert_record('grouppeerreview', $data);
         // immediately after inserting "activity" record, call this
         $this->apply_activity_instance($newitemid);
     }
 
-    protected function process_peer_review_mark($data) {
+    protected function process_grouppeerreview_mark($data) {
         global $DB;
 
         $data = (object)$data;
 
-        $data->peerid = $this->get_new_parentid('peer');
-        $data->optionid = $this->get_mappingid('peer', $data->peerid);
+        $data->peerid = $this->get_new_parentid('grouppeerreview');
+        $data->optionid = $this->get_mappingid('grouppeerreview', $data->peerid);
         $data->userid = $this->get_mappingid('user', $data->userid);
 
-        $newitemid = $DB->insert_record('peer_review_markss', $data);
+        $newitemid = $DB->insert_record('grouppeerreview_markss', $data);
         // No need to save this mapping as far as nothing depend on it
         // (child paths, file areas nor links decoder)
     }
 
     protected function after_execute() {
         // Add peer related files, no need to match by itemname (just internally handled context)
-        $this->add_related_files('mod_peer', 'intro', null);
+        $this->add_related_files('mod_grouppeerreview', 'intro', null);
     }
 }

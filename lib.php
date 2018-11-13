@@ -15,10 +15,10 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Library of functions and constants for module peer review
- * includes the main-part of peer review functions
+ * Library of functions and constants for module grouppeerreview
+ * includes the main-part of grouppeerreview functions
  *
- * @package mod_peer
+ * @package mod_grouppeerreview
  * @copyright
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -35,10 +35,10 @@ require_once($CFG->libdir.'/formslib.php');
  * of the new instance.
  *
  * @global object
- * @param object $peer the object given by mod_peer_mod_form
+ * @param object $peer the object given by mod_grouppeerreview_mod_form
  * @return int
  */
-function peer_add_instance($peer) {
+function grouppeerreview_add_instance($peer) {
     global $DB;
 
     $peer->timemodified = time();
@@ -49,15 +49,15 @@ function peer_add_instance($peer) {
     }
 
     //saving the peer review in db
-    $peerid = $DB->insert_record("peer", $peer);
+    $peerid = $DB->insert_record("grouppeerreview", $peer);
     $peer->id = $peerid;
 
-    peer_set_events($peer);
+    grouppeerreview_set_events($peer);
 
-    peer_grade_item_update($peer);
+    grouppeerreview_grade_item_update($peer);
 
     if (!empty($peer->completionexpected)) {
-        \core_completion\api::update_completion_date_event($peer->coursemodule, 'peer', $peer->id,
+        \core_completion\api::update_completion_date_event($peer->coursemodule, 'grouppeerreview', $peer->id,
             $peer->completionexpected);
     }
 
@@ -68,10 +68,10 @@ function peer_add_instance($peer) {
  * this will update a given instance
  *
  * @global object
- * @param object $peer the object given by mod_peer_mod_form
+ * @param object $peer the object given by mod_grouppeerreview_mod_form
  * @return boolean
  */
-function peer_update_instance($peer) {
+function grouppeerreview_update_instance($peer) {
     global $DB;
 
     $peer->timemodified = time();
@@ -82,24 +82,24 @@ function peer_update_instance($peer) {
     }
 
     //save the feedback into the db
-    $DB->update_record("peer", $peer);
+    $DB->update_record("grouppeerreview", $peer);
 
     //create or update the new events
-    peer_set_events($peer);
+    grouppeerreview_set_events($peer);
     $completionexpected = (!empty($peer->completionexpected)) ? $peer->completionexpected : null;
-    \core_completion\api::update_completion_date_event($peer->coursemodule, 'peer', $peer->id, $completionexpected);
+    \core_completion\api::update_completion_date_event($peer->coursemodule, 'grouppeerreview', $peer->id, $completionexpected);
 
-    peer_grade_item_update($peer);
+    grouppeerreview_grade_item_update($peer);
     return true;
 }
-function peer_get_grade_items($peer, $users) {
+function grouppeerreview_get_grade_items($peer, $users) {
     global $CFG;
 
     if (!function_exists('grade_update')) { // Workaround for buggy PHP versions.
         require_once($CFG->libdir . '/gradelib.php');
     }
 
-    $grading_info = grade_get_grades($peer->course, 'mod', 'peer', $peer->id, $users);
+    $grading_info = grade_get_grades($peer->course, 'mod', 'grouppeerreview', $peer->id, $users);
     /*
     print "<pre>";
     print_r($grading_info);
@@ -107,14 +107,14 @@ function peer_get_grade_items($peer, $users) {
     */
     return $grading_info->items[0]->grades;
 }
-function peer_grade_item_update($peer, $grades=null) {
+function grouppeerreview_grade_item_update($peer, $grades=null) {
     global $CFG;
 
     if (!function_exists('grade_update')) { // Workaround for buggy PHP versions.
         require_once($CFG->libdir . '/gradelib.php');
     }
 /*
-    if (!$cm = get_coursemodule_from_id('peer', $peer->coursemodule)) {
+    if (!$cm = get_coursemodule_from_id('grouppeerreview', $peer->coursemodule)) {
         print_error('invalidcoursemodule');
     }
 */
@@ -130,7 +130,7 @@ function peer_grade_item_update($peer, $grades=null) {
         // requires context which we don't have inside an ajax.
         $gradeitem = grade_item::fetch(array(
             'itemtype' => 'mod',
-            'itemmodule' => 'peer',
+            'itemmodule' => 'grouppeerreview',
             'iteminstance' => $peer->id,
             'courseid' => $peer->course
         ));
@@ -142,7 +142,7 @@ function peer_grade_item_update($peer, $grades=null) {
         $params['reset'] = true;
         $grades = null;
     }
-    return grade_update('mod/peer', $peer->course, 'mod', 'peer', $peer->id, 0, $grades, $params);
+    return grade_update('mod/grouppeerreview', $peer->course, 'mod', 'grouppeerreview', $peer->id, 0, $grades, $params);
 }
 
 
@@ -154,48 +154,48 @@ function peer_grade_item_update($peer, $grades=null) {
  * @param int $id the instanceid of peer
  * @return boolean
  */
-function peer_delete_instance($id) {
+function grouppeerreview_delete_instance($id) {
     global $DB;
 
-    if (!$peer = $DB->get_record('peer', array('id'=>$id))) {
+    if (!$peer = $DB->get_record('grouppeerreview', array('id'=>$id))) {
         return false;
     }
 
-    if (!$cm = get_coursemodule_from_id('peer', $peer->coursemodule)) {
+    if (!$cm = get_coursemodule_from_id('grouppeerreview', $peer->coursemodule)) {
         print_error('invalidcoursemodule');
     }
 
     $result = true;
 
     //deleting the review marks
-    if(!$DB->delete_records("peer_review_marks", array("peerid"=>$id))) {
+    if(!$DB->delete_records("grouppeerreview_marks", array("peerid"=>$id))) {
         $result = false;
     }
 
     //deleting the review final marks
-    if(!$DB->delete_records("peer_review_final_mark", array("peerid"=>$id))) {
+    if(!$DB->delete_records("grouppeerreview_final_mark", array("peerid"=>$id))) {
         $result = false;
     }
 
     //deleting old events
-    if(!$DB->delete_records('event', array('modulename'=>'peer', 'instance'=>$id))) {
+    if(!$DB->delete_records('event', array('modulename'=>'grouppeerreview', 'instance'=>$id))) {
         $result = false;
     }
 
-    if(!$DB->delete_records("peer", array("id"=>$id))) {
+    if(!$DB->delete_records("grouppeerreview", array("id"=>$id))) {
         $result = false;
     }
 
-    grade_update('mod/peer', $cm->course, 'mod', 'peer', $peer->id, 0, NULL, array('deleted'=>1));
+    grade_update('mod/grouppeerreview', $cm->course, 'mod', 'grouppeerreview', $peer->id, 0, NULL, array('deleted'=>1));
 
     return $result;
 }
 
-function peer_set_events($peer) {
+function grouppeerreview_set_events($peer) {
     global $DB, $CFG;
 }
 
-function peer_get_editor_options() {
+function grouppeerreview_get_editor_options() {
     return array('maxfiles' => EDITOR_UNLIMITED_FILES,
         'trusttext'=>true);
 }
@@ -206,7 +206,7 @@ function peer_get_editor_options() {
  * @param  stdClass  $choice            choice record
  * @return array                       status (available or not and possible warnings)
  */
-function peer_get_availability_status($peer) {
+function grouppeerreview_get_availability_status($peer) {
     $available = true;
     $warnings = array();
 
@@ -229,7 +229,7 @@ function peer_get_availability_status($peer) {
     return array($available, $warnings);
 }
 
-function peer_user_submit_response($reviews, $peer, $reviewerid) {
+function grouppeerreview_user_submit_response($reviews, $peer, $reviewerid) {
     global $DB;
 
     $timenow = time();
@@ -244,7 +244,7 @@ function peer_user_submit_response($reviews, $peer, $reviewerid) {
                 "userid"=>$userid,
                 "reviewerid"=>$reviewerid
             );
-            if( $current = $DB->get_record( "peer_review_marks", $conditions ) ) {
+            if( $current = $DB->get_record( "grouppeerreview_marks", $conditions ) ) {
                 if($review['grade']=="") {
                     $current->grade = null;
                     $completion = false;
@@ -254,7 +254,7 @@ function peer_user_submit_response($reviews, $peer, $reviewerid) {
                 //$current->grade = ($review['grade']=="") ? null : $review['grade'];
                 $current->comment = $review['comment'];
                 $current->timemodified = $timenow;
-                $DB->update_record("peer_review_marks", $current);
+                $DB->update_record("grouppeerreview_marks", $current);
             } else {
                 // There is data to write
                 $insert = $conditions;
@@ -267,7 +267,7 @@ function peer_user_submit_response($reviews, $peer, $reviewerid) {
                 //$insert['grade'] = ($review['grade']=="") ? null : $review['grade'];
                 $insert['comment'] = $review['comment'];
                 $insert['timemodified'] = $timenow;
-                $DB->insert_record("peer_review_marks", $insert);
+                $DB->insert_record("grouppeerreview_marks", $insert);
             }
         }
     }
@@ -284,7 +284,7 @@ function peer_user_submit_response($reviews, $peer, $reviewerid) {
  * @param  stdClass $context    context object
  * @since Moodle 3.0
  */
-function peer_view($peer, $course, $cm, $context) {
+function grouppeerreview_view($peer, $course, $cm, $context) {
 
     // Trigger course_module_viewed event.
     $params = array(
@@ -295,12 +295,12 @@ function peer_view($peer, $course, $cm, $context) {
     $event = \mod_choice\event\course_module_viewed::create($params);
     $event->add_record_snapshot('course_modules', $cm);
     $event->add_record_snapshot('course', $course);
-    $event->add_record_snapshot('peer', $peer);
+    $event->add_record_snapshot('grouppeerreview', $peer);
     $event->trigger();
 
 }
 
-function peer_supports($feature) {
+function grouppeerreview_supports($feature) {
     switch($feature) {
         case FEATURE_GROUPS:                  return false;
         case FEATURE_GROUPINGS:               return false;
@@ -326,7 +326,7 @@ function peer_supports($feature) {
  * @param bool $onlyactive Whether to get response data for active users only.
  * @return array
  */
-function peer_get_response_data($peer, $cm) {
+function grouppeerreview_get_response_data($peer, $cm) {
     global $CFG, $USER, $DB;
 
     $context = context_module::instance($cm->id);
@@ -376,9 +376,9 @@ function peer_get_response_data($peer, $cm) {
      * @return array of Peer review records
      * @since  Moodle 3.0
      */
-    function peer_get_my_response($peer) {
+    function grouppeerreview_get_my_response($peer) {
         global $DB, $USER;
-        return $DB->get_records('peer_review_marks', array('peerid' => $peer->id, 'reviewerid' => $USER->id), 'id');
+        return $DB->get_records('grouppeerreview_marks', array('peerid' => $peer->id, 'reviewerid' => $USER->id), 'id');
     }
 
 }
@@ -392,7 +392,7 @@ function peer_get_response_data($peer, $cm) {
  * @return bool true if we can view the results, false otherwise.
  * @since  Moodle 3.0
  */
-function peer_can_view_results($peer, $current = null, $peereopen = null) {
+function grouppeerreview_can_view_results($peer, $current = null, $peereopen = null) {
 /*
     if (is_null($peeropen)) {
         $timenow = time();
@@ -454,7 +454,7 @@ function peer_get_group_members($peer, $groupid) {
     return $groups;
 }
 */
-function peer_get_group_member_grades($peer, $groupid, $userid) {
+function grouppeerreview_get_group_member_grades($peer, $groupid, $userid) {
     global $DB;
 
     $grades = $DB->get_records_sql(" 
@@ -469,14 +469,14 @@ function peer_get_group_member_grades($peer, $groupid, $userid) {
         FROM {groups_members} AS gm
         LEFT JOIN {user} AS u 
           ON u.id = gm.userid
-        LEFT JOIN {peer_review_marks} AS prm 
+        LEFT JOIN {grouppeerreview_marks} AS prm 
           ON prm.groupid = gm.groupid
           AND prm.reviewerid = gm.userid
           AND prm.peerid = ".$peer->id."
           AND prm.userid = ".$userid."
         LEFT JOIN (
             SELECT prm2.reviewerid, SUM(prm2.grade) AS total 
-            FROM {peer_review_marks} AS prm2
+            FROM {grouppeerreview_marks} AS prm2
             WHERE prm2.groupid = ".$groupid."
             AND prm2.peerid = ".$peer->id."
             GROUP BY prm2.reviewerid
@@ -487,7 +487,7 @@ function peer_get_group_member_grades($peer, $groupid, $userid) {
     return $grades;
 }
 
-function peer_get_group_mark($peer, $members) {
+function grouppeerreview_get_group_mark($peer, $members) {
     global $DB;
 
     $groupmark = null;
@@ -506,10 +506,10 @@ function peer_get_group_mark($peer, $members) {
  * @param object $cm
  * @return void Output is echo'd
  */
-function peer_show_reportlink($user, $cm, $peer) {
+function grouppeerreview_show_reportlink($user, $cm, $peer) {
     global $DB;
 
-    $responsecount = $DB->count_records("peer_review_marks", array("peerid"=>$peer->id));
+    $responsecount = $DB->count_records("grouppeerreview_marks", array("peerid"=>$peer->id));
 
     echo '<div class="reportlink">';
     echo "<a href=\"report.php?id=$cm->id\">".get_string("viewallresponses", "peer", $responsecount)."</a>";
@@ -524,7 +524,7 @@ function peer_show_reportlink($user, $cm, $peer) {
  * @param array $allresponses
  * @return array
  */
-function peer_prepare_options($peer, $user) {
+function grouppeerreview_prepare_options($peer, $user) {
     global $DB;
 
     $prdisplay = array();
@@ -557,7 +557,7 @@ function peer_prepare_options($peer, $user) {
               {groups_members} AS gm
             , {user} AS u
             LEFT JOIN
-              {peer_review_marks} AS prm
+              {grouppeerreview_marks} AS prm
               ON prm.userid = u.id 
               AND prm.groupid = " . $group->id . " 
               AND prm.peerid = " . $peer->id . "
@@ -590,7 +590,7 @@ function peer_prepare_options($peer, $user) {
             } else {
                 $option->countanswers = 0;
             }
-            if ($DB->record_exists('peer_review_marks', array('peerid' => $peer->id, 'reviewerid' => $user->id, 'optionid' => $optionid))) {
+            if ($DB->record_exists('grouppeerreview_marks', array('peerid' => $peer->id, 'reviewerid' => $user->id, 'optionid' => $optionid))) {
                 $option->attributes->checked = true;
             }
             if ( $peer->limitanswers && ($option->countanswers >= $option->maxanswers) && empty($option->attributes->checked)) {
@@ -613,23 +613,23 @@ function peer_prepare_options($peer, $user) {
     return $prdisplay;
 }
 
-function prepare_peer_show_results($peer, $course, $cm, $groupid) {
+function prepare_grouppeerreview_show_results($peer, $course, $cm, $groupid) {
     global $DB;
 
 
 }
 
 
-function peer_get_peer($peerid) {
+function grouppeerreview_get_peer($peerid) {
     global $DB;
 
-    if ($peer = $DB->get_record("peer", array("id" => $peerid))) {
+    if ($peer = $DB->get_record("grouppeerreview", array("id" => $peerid))) {
         return $peer;
     }
     return false;
 }
 
-function peer_get_summary($peer)
+function grouppeerreview_get_summary($peer)
 {
     global $DB;
 
@@ -641,15 +641,15 @@ function peer_get_summary($peer)
     , IFNULL(responses . total, 0) AS response_count
     , members.users
     FROM
-    mdl_peer AS p 
-    LEFT JOIN mdl_groupings_groups AS gg ON p . grouping = gg . groupingid
-    LEFT JOIN mdl_groups AS gr ON gr . id = gg . groupid
+    {grouppeerreview} AS p 
+    LEFT JOIN {groupings_groups} AS gg ON p . grouping = gg . groupingid
+    LEFT JOIN {groups} AS gr ON gr . id = gg . groupid
     LEFT JOIN
     (
         SELECT gm . groupid, gg . groupingid, count(*) AS total, GROUP_CONCAT(gm.userid) AS users
         FROM 
-          mdl_groups_members AS gm
-        , mdl_groupings_groups AS gg
+          {groups_members} AS gm
+        , {groupings_groups} AS gg
         WHERE gm . groupid = gg . groupid
         GROUP BY gm . groupid, gg . groupingid
     ) AS members ON members . groupid = gg . groupid AND members . groupingid = p . grouping
@@ -658,8 +658,8 @@ function peer_get_summary($peer)
     (
         SELECT gg . groupid, gg . groupingid, count(*) AS total
         FROM 
-          mdl_groupings_groups AS gg
-        , mdl_peer_review_marks AS prm 
+          {groupings_groups} AS gg
+        , {grouppeerreview_marks} AS prm 
         WHERE prm . groupid = gg . groupid
         GROUP BY gg . groupid, gg . groupingid
     ) AS responses ON responses . groupid = gg . groupid AND responses . groupingid = p . grouping
