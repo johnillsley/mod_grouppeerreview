@@ -35,7 +35,7 @@ $strpeers = get_string('modulenameplural', 'grouppeerreview');
 
 $context = context_module::instance($cm->id);
 
-list($peeravailable, $warnings) = peer_get_availability_status($peer);
+list($peeravailable, $warnings) = grouppeerreview_get_availability_status($peer);
 
 if ($action == 'delpeer' and confirm_sesskey() and is_enrolled($context, NULL, 'mod/grouppeerreview:review') and $peer->allowupdate
         and $peeravailable) {
@@ -44,7 +44,7 @@ if ($action == 'delpeer' and confirm_sesskey() and is_enrolled($context, NULL, '
         $peeranswers = $DB->get_records('grouppeerreview_answers', array('peerid' => $peer->id, 'userid' => $USER->id),
             '', 'id');
         $todelete = array_keys($peeranswers);
-        peer_delete_responses($todelete, $peer, $cm, $course);
+        grouppeerreview_delete_responses($todelete, $peer, $cm, $course);
         redirect("view.php?id=$cm->id");
     }
 }
@@ -105,7 +105,7 @@ if (data_submitted() && !empty($action) && confirm_sesskey()) {
 }
 
 // Completion and trigger events.
-peer_view($peer, $course, $cm, $context);
+grouppeerreview_view($peer, $course, $cm, $context);
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(format_string($peer->name), 2, null);
@@ -134,59 +134,65 @@ if ($groupmode) {
 // Check if we want to include responses from inactive users.
 //$onlyactive = $peer->includeinactive ? false : true;
 
-$allresponses = peer_get_response_data($peer, $cm);
+$allresponses = grouppeerreview_get_response_data($peer, $cm);
 
 if (has_capability('mod/grouppeerreview:readresponses', $context)) {
-    peer_show_reportlink($allresponses, $cm, $peer);
+    grouppeerreview_show_reportlink($allresponses, $cm, $peer);
 }
 
 echo '<div class="clearer"></div>';
 
-if ($peer->intro) {
-    $peer->introformat = FORMAT_HTML;
-    echo $OUTPUT->box(format_module_intro('grouppeerreview', $peer, $cm->id), 'generalbox', 'intro');
-}
 
-$timenow = time();
-$current = peer_get_my_response($peer);
 //if user has already made a selection, and they are not allowed to update it or if peer is not open, show their selected answer.
 /*
 if (isloggedin() && (!empty($current)) &&
     (empty($peer->allowupdate) || ($timenow > $peer->timeclose)) ) {
     $peertexts = array();
     foreach ($current as $c) {
-        $peertexts[] = format_string(peer_get_option_text($peer, $c->optionid));
+        $peertexts[] = format_string(grouppeerreview_get_option_text($peer, $c->optionid));
     }
     echo $OUTPUT->box(get_string("yourselection", "peer", userdate($peer->timeopen)).": ".implode('; ', $peertexts), 'generalbox', 'yourselection');
 }
 */
 /// Print the form
-$peeropen = true;
-if ((!empty($peer->timeopen)) && ($peer->timeopen > $timenow)) {
-    if ($peer->showpreview) {
-        echo $OUTPUT->box(get_string('previewonly', 'grouppeerreview', userdate($peer->timeopen)), 'generalbox alert');
-    } else {
-        echo $OUTPUT->box(get_string("notopenyet", "grouppeerreview", userdate($peer->timeopen)), "generalbox notopenyet");
-        echo $OUTPUT->footer();
-        exit;
-    }
-} else if ((!empty($peer->timeclose)) && ($timenow > $peer->timeclose)) {
-    echo $OUTPUT->box(get_string("expired", "grouppeerreview", userdate($peer->timeclose)), "generalbox expired");
-    $peeropen = false;
-}
 
-//if ( (!$current or $peer->allowupdate) and $peeropen and is_enrolled($context, NULL, 'mod/peer:review')) {
+
+//if ( (!$current or $peer->allowupdate) and $peeropen and is_enrolled($context, NULL, 'mod/gouppeerreview:review')) {
 // They haven't made their peer yet or updates allowed and peer is open
 
-    $options = peer_prepare_options($peer, $USER);
+    $options = grouppeerreview_prepare_options($peer, $USER);
+
+if (count($options["groups"]) > 0) {
+    if ($peer->intro) {
+        $peer->introformat = FORMAT_HTML;
+        echo $OUTPUT->box(format_module_intro('grouppeerreview', $peer, $cm->id), 'generalbox', 'intro');
+    }
+
+    $timenow = time();
+    $current = grouppeerreview_get_my_response($peer);
+    
+    $peeropen = true;
+    if ((!empty($peer->timeopen)) && ($peer->timeopen > $timenow)) {
+        if ($peer->showpreview) {
+            echo $OUTPUT->box(get_string('previewonly', 'grouppeerreview', userdate($peer->timeopen)), 'generalbox alert');
+        } else {
+            echo $OUTPUT->box(get_string("notopenyet", "grouppeerreview", userdate($peer->timeopen)), "generalbox notopenyet");
+            echo $OUTPUT->footer();
+            exit;
+        }
+    } else if ((!empty($peer->timeclose)) && ($timenow > $peer->timeclose)) {
+        echo $OUTPUT->box(get_string("expired", "grouppeerreview", userdate($peer->timeclose)), "generalbox expired");
+        $peeropen = false;
+    }    
+    
     $renderer = $PAGE->get_renderer('mod_grouppeerreview');
     echo $renderer->display_options($options, $cm->id);
-    $peerformshown = true;
-    /*
+    $peerformshown = true; 
 } else {
     $peerformshown = false;
+    print "You cannot see the group peer review rating form because you are not in any of the groups that submitted an assignment.";
 }
-*/
+/*
 if (!$peerformshown) {
     $sitecontext = context_system::instance();
 
@@ -208,19 +214,18 @@ if (!$peerformshown) {
         echo $OUTPUT->single_button(new moodle_url('/enrol/index.php?', array('id'=>$course->id)), get_string('enrolme', 'core_enrol', $courseshortname));
         echo $OUTPUT->container_end();
         echo $OUTPUT->box_end();
+    }
+    // print the results at the bottom of the screen
+    if (grouppeerreview_can_view_results($peer, $current, $peeropen)) {
 
+        $results = prepare_grouppeerreview_show_results($peer, $course, $cm, $allresponses);
+        $renderer = $PAGE->get_renderer('mod_grouppeerreview');
+        $resultstable = $renderer->display_result($results);
+        echo $OUTPUT->box($resultstable);
+
+    } else if (!$peerformshown) {
+        echo $OUTPUT->box(get_string('noresultsviewable', 'grouppeerreview'));
     }
 }
-
-// print the results at the bottom of the screen
-if (grouppeerreview_can_view_results($peer, $current, $peeropen)) {
-    $results = prepare_grouppeerreview_show_results($peer, $course, $cm, $allresponses);
-    $renderer = $PAGE->get_renderer('mod_grouppeerreview');
-    $resultstable = $renderer->display_result($results);
-    echo $OUTPUT->box($resultstable);
-
-} else if (!$peerformshown) {
-    echo $OUTPUT->box(get_string('noresultsviewable', 'grouppeerreview'));
-}
-
+*/
 echo $OUTPUT->footer();

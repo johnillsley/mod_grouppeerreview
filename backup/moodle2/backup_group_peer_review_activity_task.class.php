@@ -26,7 +26,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/mod/peer/backup/moodle2/backup_grouppeerreview_stepslib.php');
+require_once($CFG->dirroot . '/mod/gouppeerreview/backup/moodle2/backup_grouppeerreview_stepslib.php');
 
 /**
  * Provides the steps to perform one complete backup of the peer instance

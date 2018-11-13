@@ -43,7 +43,10 @@ function grouppeerreview_add_instance($peer) {
 
     $peer->timemodified = time();
     $peer->id = '';
-
+    // Get groupingid from assignment and use for peer review
+    $groupingid = $DB->get_field('assign', 'teamsubmissiongroupingid', array("teamsubmission" => 1, "id" => $peer->assignid));
+    $peer->grouping = $groupingid;
+    
     if (empty($peer->site_after_submit)) {
         $peer->site_after_submit = '';
     }
@@ -409,7 +412,7 @@ function grouppeerreview_can_view_results($peer, $current = null, $peereopen = n
         }
     }
     if (empty($current)) {
-        $current = peer_get_my_response($peer);
+        $current = grouppeerreview_get_my_response($peer);
     }
 
     if (($peer->showresults == CHOICE_SHOWRESULTS_ALWAYS ||
@@ -421,7 +424,7 @@ function grouppeerreview_can_view_results($peer, $current = null, $peereopen = n
     return false;
 }
 /*
-function peer_get_groups($peer) {
+function grouppeerreview_get_groups($peer) {
     global $DB;
 
     $groups = $DB->get_records_sql( "
@@ -437,7 +440,7 @@ function peer_get_groups($peer) {
 }
 */
 /*
-function peer_get_group_members($peer, $groupid) {
+function grouppeerreview_get_group_members($peer, $groupid) {
     global $DB;
 
     $groups = $DB->get_records_sql(" 
@@ -563,7 +566,8 @@ function grouppeerreview_prepare_options($peer, $user) {
               AND prm.peerid = " . $peer->id . "
               AND prm.reviewerid = ".$user->id."
             WHERE gm.userid = u.id
-            AND gm.groupid = " . $group->id
+            AND gm.groupid = " . $group->id . "
+            ORDER BY u.lastname, u.firstname"
          );
 
          $groups[$key]->members = $members;
@@ -600,9 +604,9 @@ function grouppeerreview_prepare_options($peer, $user) {
         }
     }
     
-    $prdisplay['hascapability'] = is_enrolled($context, NULL, 'mod/peer:review'); //only enrolled users are allowed to peer review
+    $prdisplay['hascapability'] = is_enrolled($context, NULL, 'mod/gouppeerreview:review'); //only enrolled users are allowed to peer review
 
-    if ($peer->allowupdate && $DB->record_exists('peer_review_marks', array('peerid'=> $peer->id, 'reviewerid'=> $user->id))) {
+    if ($peer->allowupdate && $DB->record_exists('grouppeerreview_review_marks', array('peerid'=> $peer->id, 'reviewerid'=> $user->id))) {
         $prdisplay['allowupdate'] = true;
     }
 

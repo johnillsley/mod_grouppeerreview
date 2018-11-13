@@ -11,7 +11,7 @@
     $groupid    = optional_param('groupid', null, PARAM_INT);
     $grades     = optional_param_array('finalgrade', null, PARAM_INT);
 
-    $url = new moodle_url('/mod/peer/report.php', array('id'=>$id));
+    $url = new moodle_url('/mod/gouppeerreview/report.php', array('id'=>$id));
     if ($download !== '') {
         $url->param('download', $download);
     }
@@ -88,7 +88,7 @@
         $groupmode = groups_get_activity_groupmode($cm);
         if ($groupmode) {
             groups_get_activity_group($cm, true);
-            groups_print_activity_menu($cm, $CFG->wwwroot . '/mod/peer/report.php?id='.$id);
+            groups_print_activity_menu($cm, $CFG->wwwroot . '/mod/gouppeerreview/report.php?id='.$id);
         }
     } else {
         $groupmode = groups_get_activity_groupmode($cm);
@@ -110,8 +110,8 @@
 
     $renderer = $PAGE->get_renderer('mod_grouppeerreview');
 
-    echo "\r\n" . '<h5>Completion summary</h5>';
-    echo "\r\n" . '<p>'.get_string('weighting', 'grouppeerreview').': <strong>'.$peer->weighting.'%</strong></p>';
+    echo "\r\n" . '<h5 style="color: #D27">Completion summary</h5>';
+    echo "\r\n" . '<p>'.get_string('weighting', 'grouppeerreview').': <strong>'.(100-$peer->weighting).'%</strong></p>';
     echo $renderer->group_completion_summary($peer);
 
     echo "\r\n" . '<form action="report.php" method="get">';
@@ -127,12 +127,30 @@
         $groupmark = grouppeerreview_get_group_mark($peer, $members);
         $maxgrade = $DB->get_field( 'assign', 'grade', array('id'=>$peer->assignid));
 
-        echo "\r\n" . '<h5>Group results</h5>';
+        echo "\r\n" . '<h5 style="color: #D27">Group results</h5>';
+        
+        echo "\r\n" . '<div style="border: #fbeed5 ; background-color: #fcf8e3; padding:10px; color: #8a6d3b;">
+                <strong>How are group peer review marks calculated?</strong>
+<ul>
+<li>Firstly all the ratings <u>allocated</u> by a student are totalled.</li>
+<li>This total is now divided into each of their <u>allocated</u> ratings to give a normalised rating for each of their allocations.</li>
+<li>All the normalised ratings <u>received</u> by a student are then totalled.</li>
+<li>The normalised total is now multiplied by the number of students in the group and then divided by the number of actual responses.
+ This compensated normalised total adjusts for any students in the group that did not provide a rating.</li>
+<li>The peer review percentage weighting is now applied to the original group mark and the peer marks (compensated normalised total). See below...</li>
+</ul>
+Weighted group mark (for all students) = (100 - %weighting)/100 * Orignal group mark<br/>
+Weighted peer mark (for each student)  = %weighting * compensated normalised rating<br/><br/>
+Final mark = Weighted group mark + Weighted peer mark
+</div>';
+        
         echo "\r\n" . '<p>'.get_string('groupmark', 'grouppeerreview').': <strong>';
         if( is_numeric($groupmark) ) {
             echo floatval($groupmark);
-            $automatic_mark = $groupmark * $peer->weighting / $maxgrade;
+            $automatic_mark = $groupmark * (100-$peer->weighting) / $maxgrade;
             $adjusted_mark = $groupmark - $automatic_mark;
+            
+            
         } else {
             echo "Not marked";
         }
@@ -144,7 +162,7 @@
         echo "\r\n" . '<input type="hidden" name="sesskey" value="'.sesskey().'">';
         echo "\r\n" . '<input type="submit" name="submit" value="Save individual marks to gradebook">';
         echo "\r\n" . '<table class="generaltable">';
-        echo "\r\n" . '<tr><th>Student</th><th>Grades received</th><th>Adjustment</th><th>Calculated</th><th>Final mark</th></tr>';
+        echo "\r\n" . '<tr><th>Student</th><th>Ratings received</th><th>Weighted group mark</th><th>Weighted peer mark</th><th>Final mark</th></tr>';
         foreach( $members as $member) {
             if( has_capability('mod/grouppeerreview:bereviewed', $context, $member->id)) {
 
@@ -183,14 +201,17 @@
                                 : $peer_calculated;
                 }
 
+                $peer_mark = round(($peer_weighting*$groupmark)*(100-$peer->weighting)/100,1);
+                $final_mark = $peer_mark +$adjusted_mark;
                 echo "\r\n" . '</table></td>';
-                echo "\r\n" . '<td>'.$peer_weighting.'</td>';
-                echo "\r\n" . '<td><strong>'.$peer_calculated.'</strong></td>';
+                echo "\r\n" . '<td>'.$adjusted_mark.'</td>';
+                echo "\r\n" . '<td><strong>'.$peer_mark.'</strong></td>';
                 echo "\r\n" . '<td><input type="text" name="finalgrade['.$member->id.']" value="'.$final_mark.'" class="text" style="width: 50px;"/></td>';
                 echo "\r\n" . '</tr>';
             }
         }
         echo "\r\n" . '</table>';
+        echo "\r\n" . '<input type="submit" name="submit" value="Save individual marks to gradebook">';
         echo "\r\n" . '</form>';
     }
 

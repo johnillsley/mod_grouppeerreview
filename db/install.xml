@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/grouppeerreview/db" VERSION="20180530" COMMENT="XMLDB file for Moodle mod/peer"
+<XMLDB PATH="mod/grouppeerreview/db" VERSION="20180530" COMMENT="XMLDB file for Moodle mod/gouppeerreview"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -15,12 +15,13 @@
         <FIELD NAME="grouping" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="assignid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="weighting" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="instructions" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="timeopen" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timeclose" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key for peer_review_assign"/>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key for grouppeerreview_review_assign"/>
       </KEYS>
     </TABLE>
     <TABLE NAME="grouppeerreview_marks" COMMENT="mark assigned by peers">
@@ -35,7 +36,7 @@
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key for peer_review_marks"/>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key for grouppeerreview_marks"/>
       </KEYS>
       <INDEXES>
         <INDEX NAME="peeridx" UNIQUE="false" FIELDS="peerid"/>

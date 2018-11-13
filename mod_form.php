@@ -47,24 +47,33 @@ class mod_grouppeerreview_mod_form extends moodleform_mod {
         $mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');
 
         $this->standard_intro_elements(get_string('description', 'grouppeerreview'));
-
+       /* 
+        $mform->addElement('editor', 
+                'instructions', 
+                get_string('instructions', 'grouppeerreview'))->setValue(
+                                array('text' => get_string('instructions_default', 'grouppeerreview')));
+        $mform->addRule('instructions', null, 'required', null, 'client');
+*/
         $mform->addElement('select',
             'assignid',
             get_string('selectassignment', 'grouppeerreview'),
             $this->get_assignments());
         $mform->addRule('assignid', null, 'required', null, 'client');
-
+        $mform->addHelpButton('assignid', 'selectassignment', 'grouppeerreview');
+/*
         $mform->addElement('select',
             'grouping',
             get_string('selectgrouping', 'grouppeerreview'),
             $this->get_groupings());
         $mform->addRule('grouping', null, 'required', null, 'client');
-
+*/
         $mform->addElement('select',
             'weighting',
             get_string('weighting', 'grouppeerreview'),
             $this->get_weightings());
         $mform->addRule('weighting', null, 'required', null, 'client');
+        $mform->setDefault('weighting', '20');
+        $mform->addHelpButton('weighting', 'weighting', 'grouppeerreview');
 
         //-------------------------------------------------------------------------------
         $mform->addElement('header', 'timinghdr', get_string('availability'));
@@ -84,7 +93,7 @@ class mod_grouppeerreview_mod_form extends moodleform_mod {
 
     public function data_preprocessing(&$default_values) {
 /*
-        $editoroptions = peer_get_editor_options();
+        $editoroptions = grouppeerreview_get_editor_options();
 
         if ($this->current->instance) {
             // editing an existing peer review - let us prepare the added editor elements (intro done automatically)
@@ -184,7 +193,7 @@ class mod_grouppeerreview_mod_form extends moodleform_mod {
 
         return $assignments;
     }
-
+/*
     private function get_groupings() {
         global $DB, $COURSE;
 
@@ -200,11 +209,11 @@ class mod_grouppeerreview_mod_form extends moodleform_mod {
 
         return $groupings;
     }
-
+*/
     private function get_weightings() {
 
         for( $i=0 ; $i<=100 ; $i++ ) {
-            $weightings[$i] = $i;
+            $weightings[(100-$i)] = $i;
         }
         return $weightings;
     }

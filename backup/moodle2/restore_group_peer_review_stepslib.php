@@ -29,7 +29,7 @@
 /**
  * Structure step to restore one grouppeerreview activity
  */
-class restore_peer_activity_structure_step extends restore_activity_structure_step {
+class restore_grouppeerreview_activity_structure_step extends restore_activity_structure_step {
 
     protected function define_structure() {
 

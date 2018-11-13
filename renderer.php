@@ -112,7 +112,7 @@ class mod_grouppeerreview_renderer extends plugin_renderer_base {
 
     public function group_completion_summary($peer) {
 
-        $summary = grouppeerreview_get_summary($peer);  //TODO - change this so only count mod/peer:bereviewed people being graded
+        $summary = grouppeerreview_get_summary($peer);  //TODO - change this so only count mod/gouppeerreview:bereviewed people being graded
 
         $output  = "\r\n" . '<table class="generaltable">';
         $output .= "\r\n" . '<tr><th>Group</th><th>Members</th><th>Expected responses</th><th>Actual responses</th><th>Published to gradebook</th></tr>';

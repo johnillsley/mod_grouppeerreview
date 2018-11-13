@@ -24,7 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/mod/peer/backup/moodle2/restore_grouppeerreview_stepslib.php'); // Because it exists (must)
+require_once($CFG->dirroot . '/mod/gouppeerreview/backup/moodle2/restore_grouppeerreview_stepslib.php'); // Because it exists (must)
 
 /**
  * grouppeerreview restore task that provides all the settings and steps to perform one
@@ -44,7 +44,7 @@ class restore_grouppeerreview_activity_task extends restore_activity_task {
      */
     protected function define_my_steps() {
         // peer only has one structure step
-        $this->add_step(new restore_peer_activity_structure_step('grouppeerreview_structure', 'grouppeerreview.xml'));
+        $this->add_step(new restore_grouppeerreview_activity_structure_step('grouppeerreview_structure', 'grouppeerreview.xml'));
     }
 
     /**
