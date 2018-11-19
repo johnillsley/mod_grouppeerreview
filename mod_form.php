@@ -72,7 +72,7 @@ class mod_grouppeerreview_mod_form extends moodleform_mod {
             get_string('weighting', 'grouppeerreview'),
             $this->get_weightings());
         $mform->addRule('weighting', null, 'required', null, 'client');
-        $mform->setDefault('weighting', '20');
+        $mform->setDefault('weighting', '80');
         $mform->addHelpButton('weighting', 'weighting', 'grouppeerreview');
 
         //-------------------------------------------------------------------------------

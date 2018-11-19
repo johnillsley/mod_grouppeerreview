@@ -81,7 +81,7 @@ class mod_grouppeerreview_renderer extends plugin_renderer_base {
 
         $select  = "\r\n" .'<select name="review['.$group->id.']['.$member->userid.'][grade]">';
         $select .= "\r\n" .'<option value="">Select</option>';
-        for( $i=0 ; $i<=5 ; $i++ ) {
+        for( $i=0 ; $i<=100 ; $i++ ) {
             $selected = ( ($member->grade == $i && !is_null($member->grade))) ? ' selected' : '';
             $select .= "\r\n" .'<option value="'.$i.'"'.$selected.'>'.$i.'</option>';
         }

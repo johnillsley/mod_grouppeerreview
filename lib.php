@@ -530,9 +530,14 @@ function grouppeerreview_show_reportlink($user, $cm, $peer) {
 function grouppeerreview_prepare_options($peer, $user) {
     global $DB;
 
+    // TODO - If no grouping on assignment just use all course groups
+    // if $peer->grouping == 0
+    
     $prdisplay = array();
     $prdisplay['peerid'] = $peer->id;
-    $groups = $DB->get_records_sql("
+
+    if ($peer->grouping > 0) {
+        $groups = $DB->get_records_sql("
         SELECT
           gr.id
         , gr.name
@@ -544,7 +549,19 @@ function grouppeerreview_prepare_options($peer, $user) {
         AND gr.id = gm.groupid
         AND gm.userid = " . $user->id . "
         AND gg.groupingid = " . $peer->grouping
-    );
+        );
+    } else {
+        $groups = $DB->get_records_sql("
+        SELECT
+          gr.id
+        , gr.name
+        FROM
+          {groups_members} AS gm
+        , {groups} AS gr
+        WHERE gr.id = gm.groupid
+        AND gm.userid = " . $user->id
+        );
+    }
 
     foreach( $groups as $key=>$group ) {
 
@@ -636,40 +653,79 @@ function grouppeerreview_get_peer($peerid) {
 function grouppeerreview_get_summary($peer)
 {
     global $DB;
-
+    if ($peer->grouping > 0) {
+        $grouping_sql = "
+        JOIN mdl_groupings_groups AS gg
+        WHERE gg.groupingid = 1
+        AND gg.groupid = members.groupid";
+    } else {
+        $grouping_sql = "";
+    }
     $summary = $DB->get_records_sql("
     SELECT
-      gr.id
-    , gr.name
-    , IFNULL(members . total, 0) AS member_count
-    , IFNULL(responses . total, 0) AS response_count
+      members.groupid
+    , members.name
+    , IFNULL(members.member_count, 0) AS member_count
+    , IFNULL(responses.response_count, 0) AS response_count
     , members.users
-    FROM
-    {grouppeerreview} AS p 
-    LEFT JOIN {groupings_groups} AS gg ON p . grouping = gg . groupingid
-    LEFT JOIN {groups} AS gr ON gr . id = gg . groupid
-    LEFT JOIN
+      FROM
     (
-        SELECT gm . groupid, gg . groupingid, count(*) AS total, GROUP_CONCAT(gm.userid) AS users
-        FROM 
-          {groups_members} AS gm
-        , {groupings_groups} AS gg
-        WHERE gm . groupid = gg . groupid
-        GROUP BY gm . groupid, gg . groupingid
-    ) AS members ON members . groupid = gg . groupid AND members . groupingid = p . grouping
-    
-    LEFT JOIN
+    SELECT 
+      gr.id AS groupid
+    , gr.name
+    , COUNT(*) AS member_count
+    , GROUP_CONCAT(gm.userid) AS users
+    FROM mdl_groups AS gr
+    JOIN mdl_groups_members AS gm
+    WHERE gm.groupid = gr.id
+    AND gr.courseid = " . $peer->course . "
+    GROUP BY gr.id
+    ORDER BY gr.name
+    ) AS members
+    LEFT JOIN 
     (
-        SELECT gg . groupid, gg . groupingid, count(*) AS total
-        FROM 
-          {groupings_groups} AS gg
-        , {grouppeerreview_marks} AS prm 
-        WHERE prm . groupid = gg . groupid
-        GROUP BY gg . groupid, gg . groupingid
-    ) AS responses ON responses . groupid = gg . groupid AND responses . groupingid = p . grouping
-    
-    WHERE p . coursemodule = ".$peer->coursemodule);
-
+    SELECT 
+      prm.groupid
+    , COUNT(*) AS response_count
+    FROM mdl_grouppeerreview_marks AS prm
+    WHERE prm.peerid = " . $peer->id . "
+    GROUP BY prm.groupid
+    ) AS responses ON members.groupid = responses.groupid" . $grouping_sql);
+        /*
+        $summary = $DB->get_records_sql("
+        SELECT
+          gr.id
+        , gr.name
+        , IFNULL(members . total, 0) AS member_count
+        , IFNULL(responses . total, 0) AS response_count
+        , members.users
+        FROM
+        {grouppeerreview} AS p 
+        LEFT JOIN {groupings_groups} AS gg ON p . grouping = gg . groupingid
+        LEFT JOIN {groups} AS gr ON gr . id = gg . groupid
+        LEFT JOIN
+        (
+            SELECT gm . groupid, gg . groupingid, count(*) AS total, GROUP_CONCAT(gm.userid) AS users
+            FROM 
+              {groups_members} AS gm
+            , {groupings_groups} AS gg
+            WHERE gm . groupid = gg . groupid
+            GROUP BY gm . groupid, gg . groupingid
+        ) AS members ON members . groupid = gg . groupid AND members . groupingid = p . grouping
+        
+        LEFT JOIN
+        (
+            SELECT gg . groupid, gg . groupingid, count(*) AS total
+            FROM 
+              {groupings_groups} AS gg
+            , {grouppeerreview_marks} AS prm 
+            WHERE prm . groupid = gg . groupid
+            GROUP BY gg . groupid, gg . groupingid
+        ) AS responses ON responses . groupid = gg . groupid AND responses . groupingid = p . grouping
+        
+        WHERE p . id = ".$peer->id);
+        */
+        
     return $summary;
 }
 
