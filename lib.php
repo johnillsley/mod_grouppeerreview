@@ -656,7 +656,7 @@ function grouppeerreview_get_summary($peer)
     if ($peer->grouping > 0) {
         $grouping_sql = "
         JOIN mdl_groupings_groups AS gg
-        WHERE gg.groupingid = 1
+        WHERE gg.groupingid = " . $peer->grouping . "
         AND gg.groupid = members.groupid";
     } else {
         $grouping_sql = "";
