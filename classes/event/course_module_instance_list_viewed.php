@@ -15,16 +15,26 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Group Peer Review
+ * The mod_grouppeerreview instance list viewed event.
  *
- * @package mod_grouppeerreview
- * @author     John Illsley
+ * @package    mod_grouppeerreview
+ * @author     John Illsley <j.s.illsley@bath.ac.uk>
+ * @copyright  2018 University of Bath
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+namespace mod_grouppeerreview\event;
+
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2018111201; // The current module version (Date: YYYYMMDDXX).
-$plugin->requires  = 2017110800; // Requires this Moodle version.
-$plugin->component = 'mod_grouppeerreview'; // Full name of the plugin (used for diagnostics).
-$plugin->cron      = 0;
+/**
+ * The mod_grouppeerreview instance list viewed event class.
+ *
+ * @package    mod_grouppeerreview
+ * @author     John Illsley <j.s.illsley@bath.ac.uk>
+ * @copyright  2018 University of Bath
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class course_module_instance_list_viewed extends \core\event\course_module_instance_list_viewed {
+    // No code required here as the parent class handles it all.
+}

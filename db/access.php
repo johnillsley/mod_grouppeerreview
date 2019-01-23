@@ -18,7 +18,8 @@
  * Plugin capabilities
  *
  * @package    mod_grouppeerreview
- * @copyright  2006 Martin Dougiamas
+ * @author     John Illsley <j.s.illsley@bath.ac.uk>
+ * @copyright  2018 University of Bath
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -31,16 +32,27 @@ $capabilities = array(
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
         'archetypes' => array(
-            'teacher' => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW,
             'manager' => CAP_ALLOW
         ),
         'clonepermissionsfrom' => 'moodle/course:manageactivities'
     ),
 
+    'mod/grouppeerreview:downloadresponses' => array(
+        'riskbitmask' => RISK_XSS | RISK_PERSONAL,
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => array(
+                'teacher' => CAP_ALLOW,
+                'editingteacher' => CAP_ALLOW,
+                'manager' => CAP_ALLOW
+        ),
+        'clonepermissionsfrom' => 'moodle/course:manageactivities'
+    ),
+
     'mod/grouppeerreview:readresponses' => array(
         'captype' => 'read',
-        'contextlevel' => CONTEXT_COURSE,
+        'contextlevel' => CONTEXT_MODULE | RISK_PERSONAL,
         'archetypes' => array(
             'teacher' => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW,
@@ -50,7 +62,7 @@ $capabilities = array(
     ),
 
     'mod/grouppeerreview:bereviewed' => array(
-        'captype' => 'write',
+        'captype' => 'read',
         'contextlevel' => CONTEXT_MODULE,
         'archetypes' => array(
             'student' => CAP_ALLOW,
@@ -68,16 +80,4 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         ),
     ),
-
-    'mod/grouppeerreview:deleteresponses' => array(
-    'riskbitmask' => RISK_XSS,
-    'captype' => 'write',
-    'contextlevel' => CONTEXT_MODULE,
-    'archetypes' => array(
-        'student' => CAP_ALLOW,
-        'teacher' => CAP_ALLOW,
-        'editingteacher' => CAP_ALLOW,
-        'manager' => CAP_ALLOW
-    )
-)
 );

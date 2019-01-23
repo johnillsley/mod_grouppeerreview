@@ -1,0 +1,36 @@
+.grouppeerreview-report input {
+    width: 50px;
+}
+
+.grouppeerreview-commentbox {
+    width: 400px !important;
+    height: 60px !important;
+}
+
+.grouppeerreview-report > form > table > tbody > tr > td {
+    border-top: 1px solid #555 !important;
+}
+
+.font-size-sm tr td, .font-size-sm {
+    font-size: .875rem;
+}
+
+.grouppeerreview-selected-group td {
+    background-color: #d9edf7 !important;
+}
+
+.no-margin-bottom {
+    margin-bottom: 0px !important;
+}
+
+.grade-saved {
+    color: #8ec63f;
+}
+
+.grouppeerreview-comment {
+    width: 100%;
+}
+
+.grouppeerreview-fullwidth {
+    width: 100%;
+}

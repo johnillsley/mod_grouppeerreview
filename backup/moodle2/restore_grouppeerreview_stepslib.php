@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -18,13 +17,16 @@
 /**
  * @package    mod_grouppeerreview
  * @subpackage backup-moodle2
- * @copyright 2010 onwards Eloy Lafuente (stronk7) {@link http://stronk7.com}
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @author     John Illsley <j.s.illsley@bath.ac.uk>
+ * @copyright  2018 University of Bath
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 /**
  * Define all the restore steps that will be used by the restore_grouppeerreview_activity_task
  */
+
+defined('MOODLE_INTERNAL') || die();
 
 /**
  * Structure step to restore one grouppeerreview activity
@@ -39,14 +41,16 @@ class restore_grouppeerreview_activity_structure_step extends restore_activity_s
         $paths[] = new restore_path_element('grouppeerreview', '/activity/grouppeerreview');
 
         if ($userinfo) {
-            $paths[] = new restore_path_element('grouppeerreview_mark', '/activity/grouppeerreview/review_marks/review_mark');
+            $paths[] = new restore_path_element(
+                    'grouppeerreview_mark',
+                    '/activity/grouppeerreview/grouppeerreview_marks/grouppeerreview_mark');
         }
 
-        // Return the paths wrapped into standard activity structure
+        // Return the paths wrapped into standard activity structure.
         return $this->prepare_activity_structure($paths);
     }
 
-    protected function process_peer($data) {
+    protected function process_grouppeerreview($data) {
         global $DB;
 
         $data = (object)$data;
@@ -58,9 +62,12 @@ class restore_grouppeerreview_activity_structure_step extends restore_activity_s
         $data->timeopen = $this->apply_date_offset($data->timeopen);
         $data->timeclose = $this->apply_date_offset($data->timeclose);
 
-        // insert the peer record
+        $data->groupingid = $this->get_mappingid('grouping', $data->groupingid);
+        $data->assignid = $this->get_mappingid('assign', $data->assignid);
+
+        // Insert the peer record.
         $newitemid = $DB->insert_record('grouppeerreview', $data);
-        // immediately after inserting "activity" record, call this
+        // Immediately after inserting "activity" record, call this.
         $this->apply_activity_instance($newitemid);
     }
 
@@ -68,18 +75,19 @@ class restore_grouppeerreview_activity_structure_step extends restore_activity_s
         global $DB;
 
         $data = (object)$data;
-
         $data->peerid = $this->get_new_parentid('grouppeerreview');
-        $data->optionid = $this->get_mappingid('grouppeerreview', $data->peerid);
+        $data->groupid = $this->get_mappingid('group', $data->groupid);
         $data->userid = $this->get_mappingid('user', $data->userid);
+        $data->reviewerid = $this->get_mappingid('user', $data->reviewerid);
 
-        $newitemid = $DB->insert_record('grouppeerreview_markss', $data);
-        // No need to save this mapping as far as nothing depend on it
-        // (child paths, file areas nor links decoder)
+        $newitemid = $DB->insert_record('grouppeerreview_marks', $data);
+        // No need to save this mapping as far as nothing depend on it.
+        // (child paths, file areas nor links decoder).
     }
 
     protected function after_execute() {
-        // Add peer related files, no need to match by itemname (just internally handled context)
+        // Add peer related files, no need to match by itemname (just internally handled context).
         $this->add_related_files('mod_grouppeerreview', 'intro', null);
+        $this->add_related_files('mod_grouppeerreview', 'studentinstructions', null);
     }
 }

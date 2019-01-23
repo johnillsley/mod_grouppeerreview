@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -18,15 +17,16 @@
 /**
  * Defines backup_grouppeerreview_activity_task class
  *
- * @package     mod_grouppeerreview
- * @category    backup
- * @copyright   2010 onwards Eloy Lafuente (stronk7) {@link http://stronk7.com}
- * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    mod_grouppeerreview
+ * @subpackage backup-moodle2
+ * @author     John Illsley <j.s.illsley@bath.ac.uk>
+ * @copyright  2018 University of Bath
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/mod/gouppeerreview/backup/moodle2/backup_grouppeerreview_stepslib.php');
+require_once($CFG->dirroot . '/mod/grouppeerreview/backup/moodle2/backup_grouppeerreview_stepslib.php');
 
 /**
  * Provides the steps to perform one complete backup of the peer instance
@@ -55,15 +55,19 @@ class backup_grouppeerreview_activity_task extends backup_activity_task {
     static public function encode_content_links($content) {
         global $CFG;
 
-        $base = preg_quote($CFG->wwwroot,"/");
+        $base = preg_quote($CFG->wwwroot, "/");
 
-        // Link to the list of grouppeerreviews
-        $search="/(".$base."\/mod\/peer\/index.php\?id\=)([0-9]+)/";
-        $content= preg_replace($search, '$@PEERINDEX*$2@$', $content);
+        // Link to the list of grouppeerreviews.
+        $search = "/(".$base."\/mod\/grouppeerreview\/index.php\?id\=)([0-9]+)/";
+        $content = preg_replace($search, '$@GROUPPEERREVIEWINDEX*$2@$', $content);
 
-        // Link to grouppeerreview view by moduleid
-        $search="/(".$base."\/mod\/peer\/view.php\?id\=)([0-9]+)/";
-        $content= preg_replace($search, '$@PEERVIEWBYID*$2@$', $content);
+        // Link to grouppeerreview view by moduleid.
+        $search = "/(".$base."\/mod\/grouppeerreview\/view.php\?id\=)([0-9]+)/";
+        $content = preg_replace($search, '$@GROUPPEERREVIEWVIEWBYID*$2@$', $content);
+
+        // Link to grouppeerreview view by moduleid.
+        $search = "/(".$base."\/mod\/grouppeerreview\/report.php\?id\=)([0-9]+)/";
+        $content = preg_replace($search, '$@GROUPPEERREVIEWREPORTBYID*$2@$', $content);
 
         return $content;
     }

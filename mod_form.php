@@ -17,12 +17,13 @@
 /**
  * print the form to add or edit a grouppeerreview instance
  *
- * @author John Illsley
- * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @package mod_peer
+ * @package    mod_grouppeerreview
+ * @author     John Illsley <j.s.illsley@bath.ac.uk>
+ * @copyright  2018 University of Bath
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
  */
 
-//It must be included from a Moodle page
+// It must be included from a Moodle page.
 if (!defined('MOODLE_INTERNAL')) {
     die('Direct access to this script is forbidden.');
 }
@@ -32,51 +33,60 @@ require_once($CFG->dirroot.'/course/moodleform_mod.php');
 class mod_grouppeerreview_mod_form extends moodleform_mod {
 
     public function definition() {
-        global $CFG, $DB;
 
-        $editoroptions = grouppeerreview_get_editor_options();
-
-        $mform    =& $this->_form;
+        $mform = $this->_form;
+        $this->_features->showdescription = false; // Prevents the show description box from being added to the form.
+        $config = get_config('mod_grouppeerreview');
 
         //-------------------------------------------------------------------------------
-        $mform->addElement('header', 'general', get_string('general', 'form'));
-
-        $mform->addElement('text', 'name', get_string('name', 'grouppeerreview'), array('size'=>'64'));
+        $mform->addElement('header', 'generalhdr', get_string('general', 'form'));
+        $mform->addElement('text', 'name', get_string('name', 'grouppeerreview'), array('size' => '48'));
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', null, 'required', null, 'client');
         $mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');
+        $this->standard_intro_elements(get_string('studentinstructions', 'grouppeerreview'));
+        $mform->addRule('introeditor', null, 'required', null, 'client');
 
-        $this->standard_intro_elements(get_string('description', 'grouppeerreview'));
-       /* 
-        $mform->addElement('editor', 
-                'instructions', 
-                get_string('instructions', 'grouppeerreview'))->setValue(
-                                array('text' => get_string('instructions_default', 'grouppeerreview')));
-        $mform->addRule('instructions', null, 'required', null, 'client');
-*/
-        $mform->addElement('select',
-            'assignid',
-            get_string('selectassignment', 'grouppeerreview'),
-            $this->get_assignments());
+        $mform->addElement(
+                'select',
+                'assignid',
+                get_string('assignmentselect', 'grouppeerreview'),
+                $this->get_assignments());
+        $mform->setType('assignid', PARAM_INT);
         $mform->addRule('assignid', null, 'required', null, 'client');
-        $mform->addHelpButton('assignid', 'selectassignment', 'grouppeerreview');
-/*
-        $mform->addElement('select',
-            'grouping',
-            get_string('selectgrouping', 'grouppeerreview'),
-            $this->get_groupings());
-        $mform->addRule('grouping', null, 'required', null, 'client');
-*/
-        $mform->addElement('select',
-            'weighting',
-            get_string('weighting', 'grouppeerreview'),
-            $this->get_weightings());
+        $mform->addHelpButton('assignid', 'assignmentselect', 'grouppeerreview');
+
+        $mform->addElement(
+                'select',
+                'weighting',
+                get_string('weighting', 'grouppeerreview'),
+                $this->get_dropdown_values());
         $mform->addRule('weighting', null, 'required', null, 'client');
-        $mform->setDefault('weighting', '80');
+        $mform->setDefault('weighting', $config->defaultweighting);
         $mform->addHelpButton('weighting', 'weighting', 'grouppeerreview');
+
+        $mform->addElement(
+                'select',
+                'maxrating',
+                get_string('maxrating', 'grouppeerreview'),
+                $this->get_dropdown_values());
+        $mform->addRule('maxrating', null, 'required', null, 'client');
+        $mform->setDefault('maxrating', $config->maxrating);
+        $mform->addHelpButton('maxrating', 'maxrating', 'grouppeerreview');
+
+        $mform->addElement(
+                'select',
+                'selfassess',
+                get_string('selfassess', 'grouppeerreview'),
+                array(
+                        "1" => get_string('selfassessyes', 'grouppeerreview'),
+                        "0" => get_string('selfassessno', 'grouppeerreview')
+                ));
+        $mform->addHelpButton('selfassess', 'selfassess', 'grouppeerreview');
 
         //-------------------------------------------------------------------------------
         $mform->addElement('header', 'timinghdr', get_string('availability'));
+        $mform->setExpanded('timinghdr');
 
         $mform->addElement('date_time_selector', 'timeopen', get_string('peeropen', 'grouppeerreview'),
             array('optional' => true));
@@ -84,39 +94,38 @@ class mod_grouppeerreview_mod_form extends moodleform_mod {
         $mform->addElement('date_time_selector', 'timeclose', get_string('peerclose', 'grouppeerreview'),
             array('optional' => true));
 
-        //-------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------
         $this->standard_coursemodule_elements();
-        //-------------------------------------------------------------------------------
-        // buttons
+        $mform->setDefault('completion', 2);
+        // -------------------------------------------------------------------------------
         $this->add_action_buttons();
     }
 
-    public function data_preprocessing(&$default_values) {
-/*
-        $editoroptions = grouppeerreview_get_editor_options();
+    /**
+     * Prepares the form before data are set
+     *
+     * Additional wysiwyg editor are prepared here, the introeditor is prepared automatically by core.
+     * Grade items are set here because the core modedit supports single grade item only.
+     *
+     * @param array $data to be set
+     * @return void
+     */
+    public function data_preprocessing(&$data) {
 
         if ($this->current->instance) {
-            // editing an existing peer review - let us prepare the added editor elements (intro done automatically)
-            $draftitemid = file_get_submitted_draft_itemid('page_after_submit');
-            $default_values['page_after_submit_editor']['text'] =
-                                    file_prepare_draft_area($draftitemid, $this->context->id,
-                                    'mod_grouppeerreview', 'page_after_submit', false,
-                                    $editoroptions,
-                                    $default_values['page_after_submit']);
-
-            $default_values['page_after_submit_editor']['format'] = $default_values['page_after_submitformat'];
-            $default_values['page_after_submit_editor']['itemid'] = $draftitemid;
+            /*
+            $draftitemid = file_get_submitted_draft_itemid('studentinstructions');
+            $data['studentinstructionseditor']['text'] = file_prepare_draft_area($draftitemid, $this->context->id,
+                    'mod_grouppeerreview', 'studentinstructions', 0,
+                    $this->_customdata['editoroptions'],
+                    $data['studentinstructions']);
+            $data['studentinstructionseditor']['format'] = editors_get_preferred_format();
+            $data['studentinstructionseditor']['itemid'] = $draftitemid;
+            */
         } else {
-            // adding a new peer instance
-            $draftitemid = file_get_submitted_draft_itemid('page_after_submit_editor');
-
-            // no context yet, itemid not used
-            file_prepare_draft_area($draftitemid, null, 'mod_grouppeerreview', 'page_after_submit', false);
-            $default_values['page_after_submit_editor']['text'] = '';
-            $default_values['page_after_submit_editor']['format'] = editors_get_preferred_format();
-            $default_values['page_after_submit_editor']['itemid'] = $draftitemid;
+            $defaultcontent = get_config('mod_grouppeerreview', 'defaultinstructions');
+            $data['introeditor'] = array('text' => $defaultcontent, 'format' => editors_get_preferred_format());
         }
-*/
     }
 
     /**
@@ -128,18 +137,17 @@ class mod_grouppeerreview_mod_form extends moodleform_mod {
      * @param stdClass $data the form data to be modified.
      */
     public function data_postprocessing($data) {
-        parent::data_postprocessing($data);
-        if (isset($data->page_after_submit_editor)) {
-            $data->page_after_submitformat = $data->page_after_submit_editor['format'];
-            $data->page_after_submit = $data->page_after_submit_editor['text'];
 
-            if (!empty($data->completionunlocked)) {
-                // Turn off completion settings if the checkboxes aren't ticked
-                $autocompletion = !empty($data->completion) &&
-                    $data->completion == COMPLETION_TRACKING_AUTOMATIC;
-                if (!$autocompletion || empty($data->completionsubmit)) {
-                    $data->completionsubmit=0;
-                }
+        parent::data_postprocessing($data);
+        /*
+        if (isset($data->studentinstructionseditor)) {
+            $data->studentinstructions = $data->studentinstructionseditor['text'];
+        }
+        */
+        // Set up completion section even if checkbox is not ticked.
+        if (!empty($data->completionunlocked)) {
+            if (empty($data->completionsubmit)) {
+                $data->completionsubmit = 0;
             }
         }
     }
@@ -155,20 +163,21 @@ class mod_grouppeerreview_mod_form extends moodleform_mod {
         $errors = parent::validation($data, $files);
 
         // Check open and close times are consistent.
-        if ($data['timeopen'] && $data['timeclose'] &&
-                $data['timeclose'] < $data['timeopen']) {
+        if ($data['timeopen'] && $data['timeclose'] && $data['timeclose'] < $data['timeopen']) {
             $errors['timeclose'] = get_string('closebeforeopen', 'grouppeerreview');
         }
         return $errors;
     }
 
+    /**
+     * Add any custom completion rules to the form.
+     *
+     * @return array Contains the names of the added form elements
+     */
     public function add_completion_rules() {
         $mform =& $this->_form;
 
-        $mform->addElement('checkbox',
-                           'completionsubmit',
-                           '',
-                           get_string('completionsubmit', 'grouppeerreview'));
+        $mform->addElement('checkbox', 'completionsubmit', '', get_string('completionsubmit', 'grouppeerreview'));
         // Enable this completion rule by default.
         $mform->setDefault('completionsubmit', 1);
         return array('completionsubmit');
@@ -178,43 +187,37 @@ class mod_grouppeerreview_mod_form extends moodleform_mod {
         return !empty($data['completionsubmit']);
     }
 
+    /**
+     * Returns all the assignments (id and name) on the course that have group submission set
+     *
+     * @return array of assign id and name
+     **/
     private function get_assignments() {
         global $DB, $COURSE;
 
         $conditions = array(
             "course" => $COURSE->id,
+            "teamsubmission" => 1
         );
         $records = $DB->get_records( "assign", $conditions, 'name', 'id, name' );
         $assignments = array();
-        $assignments[0] = 'Please select...';
-        foreach($records as $record) {
+        $assignments[''] = get_string('pleaseselect', 'grouppeerreview');
+        foreach ($records as $record) {
             $assignments[$record->id] = $record->name;
         }
-
         return $assignments;
     }
-/*
-    private function get_groupings() {
-        global $DB, $COURSE;
 
-        $conditions = array(
-            "courseid" => $COURSE->id,
-        );
-        $records = $DB->get_records( "groupings", $conditions, 'name', 'id, name' );
-        $groupings = array();
-        $groupings[0] = 'Please select...';
-        foreach($records as $record) {
-            $groupings[$record->id] = $record->name;
+    /**
+     * Returns an array containing numbers 0 to 100
+     *
+     * @return array
+     **/
+    private function get_dropdown_values() {
+        $values = array();
+        for ($i = 0; $i <= 100; $i++) {
+            $values[$i] = $i;
         }
-
-        return $groupings;
-    }
-*/
-    private function get_weightings() {
-
-        for( $i=0 ; $i<=100 ; $i++ ) {
-            $weightings[(100-$i)] = $i;
-        }
-        return $weightings;
+        return $values;
     }
 }
