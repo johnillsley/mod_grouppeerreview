@@ -356,7 +356,7 @@ function grouppeerreview_user_submit_response($grouppeerreview, $reviews, $revie
                     $DB->update_record("grouppeerreview_marks", $update);
                     $dbupdated = true;
                 } else {
-                    if (!empty($review['grade'])) {
+                    if (isset($review['grade'])) {
                         // Insert a new record.
                         $insert = $conditions;
                         $insert->grade          = $review['grade'];
