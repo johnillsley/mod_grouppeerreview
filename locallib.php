@@ -161,6 +161,7 @@ function grouppeerreview_get_report($grouppeerreview, $groupid) {
     $cm = get_coursemodule_from_instance('grouppeerreview', $grouppeerreview->id);
     $context = context_module::instance($cm->id);
     $members = groups_get_members($groupid, 'u.id, u.firstname, u.lastname');
+    
     $gradebookgrades = grouppeerreview_get_grade_items($grouppeerreview, array_column($members, 'id'));
     $groupmark = grouppeerreview_get_group_mark($grouppeerreview, $members);
     $maxgrade = $DB->get_field('assign', 'grade', array('id' => $grouppeerreview->assignid));
@@ -278,7 +279,12 @@ function grouppeerreview_get_group_mark($grouppeerreview, $members) {
 
 function grouppeerreview_get_group_member_grades($grouppeerreview, $groupid, $userid) {
     global $DB;
-    // THIS IS SUPERSEDED BY grouppeerreview_get_reviews.
+
+    if ($grouppeerreview->selfassess == 0) {
+        $extrasql = "AND gm.userid != " . $userid;
+    } else {
+        $extrasql = "";
+    }
     $grades = $DB->get_records_sql("
         SELECT
           u.id reviewerid
@@ -304,6 +310,7 @@ function grouppeerreview_get_group_member_grades($grouppeerreview, $groupid, $us
             GROUP BY prm2.reviewerid
         ) reviewer ON prm.reviewerid = reviewer.reviewerid
         WHERE gm.groupid = " . $groupid . "
+        " . $extrasql . "
         ORDER BY u.lastname, u.firstname");
 
     return $grades;
@@ -581,7 +588,6 @@ function grouppeerreview_get_groups($grouppeerreview, $userid = null) {
                   gr.id
                 , gr.name
                 FROM {groups} gr
-                JOIN {groupings_groups} gg
                 " . $extrafrom . "
                 WHERE gr.courseid = ?
                 " . $extrawhere . "

@@ -152,8 +152,8 @@ function grouppeerreview_grade_item_update($grouppeerreview, $grades=null) {
     if (!function_exists('grade_update')) { // Workaround for buggy PHP versions.
         require_once($CFG->libdir . '/gradelib.php');
     }
-    $cm = get_coursemodule_from_instance('grouppeerreview', $grouppeerreview->id);
-    $params = array('itemname' => $grouppeerreview->name, 'idnumber' => $cm->id);
+    $params = array('itemname' => $grouppeerreview->name, 'idnumber' => $grouppeerreview->cmidnumber);
+    
     if (isset($grouppeerreview->maximumgrade)) {
         $params['gradetype'] = GRADE_TYPE_VALUE;
         $params['grademax'] = $grouppeerreview->maximumgrade;

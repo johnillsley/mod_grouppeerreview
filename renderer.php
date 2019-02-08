@@ -51,6 +51,7 @@ class mod_grouppeerreview_renderer extends plugin_renderer_base {
         foreach ($options['groups'] as $group) {
             $html .= html_writer::tag('h5', $group->name);
 
+            $selfassess = null;
             $table = new html_table();
             $table->head = array(
                     get_string('groupmember', 'grouppeerreview'),
@@ -65,13 +66,24 @@ class mod_grouppeerreview_renderer extends plugin_renderer_base {
                         $gradeselect = $this->select_grades($grouppeerreview, $member, $group, $isopen);
                         $commentbox = $this->comment_input($member, $group, $isopen);
 
-                        $table->data[] = array(
-                                $member->firstname."&nbsp;".$member->lastname,
-                                $gradeselect,
-                                $commentbox
-                        );
+                        if ($grouppeerreview->selfassess && $member->userid == $USER->id) {
+                            $selfassess = array(
+                                    "<strong>Self assessment:</strong> please evaluate your own contribution",
+                                    $gradeselect,
+                                    $commentbox
+                            );
+                        } else {
+                            $table->data[] = array(
+                                    $member->firstname."&nbsp;".$member->lastname,
+                                    $gradeselect,
+                                    $commentbox
+                            );
+                        }
                     }
                 }
+            }
+            if ($selfassess) {
+                $table->data[] = $selfassess;
             }
             $html .= html_writer::table($table);
         }
