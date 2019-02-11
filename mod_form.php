@@ -38,7 +38,6 @@ class mod_grouppeerreview_mod_form extends moodleform_mod {
         $this->_features->showdescription = false; // Prevents the show description box from being added to the form.
         $config = get_config('mod_grouppeerreview');
 
-        //-------------------------------------------------------------------------------
         $mform->addElement('header', 'generalhdr', get_string('general', 'form'));
         $mform->addElement('text', 'name', get_string('name', 'grouppeerreview'), array('size' => '48'));
         $mform->setType('name', PARAM_TEXT);
@@ -84,7 +83,6 @@ class mod_grouppeerreview_mod_form extends moodleform_mod {
                 ));
         $mform->addHelpButton('selfassess', 'selfassess', 'grouppeerreview');
 
-        //-------------------------------------------------------------------------------
         $mform->addElement('header', 'timinghdr', get_string('availability'));
         $mform->setExpanded('timinghdr');
 
@@ -94,10 +92,9 @@ class mod_grouppeerreview_mod_form extends moodleform_mod {
         $mform->addElement('date_time_selector', 'timeclose', get_string('peerclose', 'grouppeerreview'),
             array('optional' => true));
 
-        // -------------------------------------------------------------------------------
         $this->standard_coursemodule_elements();
         $mform->setDefault('completion', 2);
-        // -------------------------------------------------------------------------------
+
         $this->add_action_buttons();
     }
 
@@ -113,15 +110,7 @@ class mod_grouppeerreview_mod_form extends moodleform_mod {
     public function data_preprocessing(&$data) {
 
         if ($this->current->instance) {
-            /*
-            $draftitemid = file_get_submitted_draft_itemid('studentinstructions');
-            $data['studentinstructionseditor']['text'] = file_prepare_draft_area($draftitemid, $this->context->id,
-                    'mod_grouppeerreview', 'studentinstructions', 0,
-                    $this->_customdata['editoroptions'],
-                    $data['studentinstructions']);
-            $data['studentinstructionseditor']['format'] = editors_get_preferred_format();
-            $data['studentinstructionseditor']['itemid'] = $draftitemid;
-            */
+
         } else {
             $defaultcontent = get_config('mod_grouppeerreview', 'defaultinstructions');
             $data['introeditor'] = array('text' => $defaultcontent, 'format' => editors_get_preferred_format());

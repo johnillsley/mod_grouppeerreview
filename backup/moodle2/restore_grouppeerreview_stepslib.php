@@ -88,6 +88,5 @@ class restore_grouppeerreview_activity_structure_step extends restore_activity_s
     protected function after_execute() {
         // Add peer related files, no need to match by itemname (just internally handled context).
         $this->add_related_files('mod_grouppeerreview', 'intro', null);
-        $this->add_related_files('mod_grouppeerreview', 'studentinstructions', null);
     }
 }

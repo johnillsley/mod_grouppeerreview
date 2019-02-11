@@ -84,7 +84,6 @@ class backup_grouppeerreview_activity_structure_step extends backup_activity_str
 
         // Define file annotations.
         $grouppeerreview->annotate_files('mod_grouppeerreview', 'intro', null); // This file area hasn't itemid.
-        $grouppeerreview->annotate_files('mod_grouppeerreview', 'studentinstructions', null); // This file area hasn't itemid.
 
         // Return the root element (grouppeerreview), wrapped into standard activity structure.
         return $this->prepare_activity_structure($grouppeerreview);

@@ -74,6 +74,7 @@ if (data_submitted() && has_capability('mod/grouppeerreview:readresponses', $con
                 unset($grades[$k]);
             }
         }
+        $grouppeerreview->cmidnumber = $cm->id;
         grouppeerreview_grade_item_update($grouppeerreview, $grades);
         redirect("report.php?id=$cm->id&groupid=$groupid");
     }

@@ -162,11 +162,11 @@ class mod_grouppeerreview_privacy_provider_testcase extends \core_privacy\tests\
     public function test_export_for_context() {
 
         $cmcontext = context_module::instance($this->cm->id);
-        print_r($cmcontext);
+
         // Export all of the data for the context.
         $this->export_context_data_for_user($this->user->id, $cmcontext, 'mod_grouppeerreview');
         $writer = \core_privacy\local\request\writer::with_context($cmcontext);
-        print_r($writer);
+
         // $this->assertTrue($writer->has_any_data());
     }
 

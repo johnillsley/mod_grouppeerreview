@@ -141,10 +141,16 @@ function grouppeerreview_get_reviews($grouppeerreview, $groupid = null, $userid 
 
 function grouppeerreview_check_all_responses($grouppeerreview, $userid) {
     $userresponses = grouppeerreview_prepare_options($grouppeerreview, $userid);
-
+    $cm = get_coursemodule_from_instance('grouppeerreview', $grouppeerreview->id);
+    $context = context_module::instance($cm->id);
+    
     $allcomplete = true;
     foreach ($userresponses["groups"] as $groups) {
         foreach ($groups->members as $review) {
+            // Are they gradable?
+            if (!has_capability('mod/grouppeerreview:bereviewed', $context, $review->userid)) {
+                continue;
+            }
             if ($review->grade == "") {
                 $allcomplete = false;
                 break 2;
@@ -161,7 +167,7 @@ function grouppeerreview_get_report($grouppeerreview, $groupid) {
     $cm = get_coursemodule_from_instance('grouppeerreview', $grouppeerreview->id);
     $context = context_module::instance($cm->id);
     $members = groups_get_members($groupid, 'u.id, u.firstname, u.lastname');
-    
+
     $gradebookgrades = grouppeerreview_get_grade_items($grouppeerreview, array_column($members, 'id'));
     $groupmark = grouppeerreview_get_group_mark($grouppeerreview, $members);
     $maxgrade = $DB->get_field('assign', 'grade', array('id' => $grouppeerreview->assignid));
@@ -234,7 +240,7 @@ function grouppeerreview_prepare_options($grouppeerreview, $userid = null) {
         $params[] = $grouppeerreview->id;
         $params[] = $userid;
         $params[] = $group->id;
-        
+
         $members = $DB->get_records_sql("
             SELECT
               gm.userid
@@ -518,7 +524,7 @@ function grouppeerreview_get_response_count($gpr) {
     $params = array();
     $params[] = $grouppeerreview->course;
     $params[] = $grouppeerreview->id;
-    
+
     if ($grouppeerreview->groupingid > 0) {
         $groupingfrom = "JOIN {groupings_groups} gg";
         $groupingwhere = "AND gg.groupingid = ? AND gg.groupid = gr.id";
@@ -547,7 +553,7 @@ function grouppeerreview_get_response_count($gpr) {
             AND gprm.grade IS NOT NULL
             " . $groupingwhere . "
     ", $params);
-    
+
     return $responsecount;
 }
 
@@ -556,7 +562,7 @@ function grouppeerreview_get_groups($grouppeerreview, $userid = null) {
 
     $params = array();
     $params[] = $grouppeerreview->course;
-    
+
     if ($userid) {
         $params[] = $userid;
         $extrafrom = "JOIN {groups_members} gm";
@@ -565,7 +571,7 @@ function grouppeerreview_get_groups($grouppeerreview, $userid = null) {
         $extrafrom = "";
         $extrawhere = "";
     }
-    
+
     if ($grouppeerreview->groupingid > 0) {
         $params[] = $grouppeerreview->groupingid;
 
@@ -599,17 +605,17 @@ function grouppeerreview_get_groups($grouppeerreview, $userid = null) {
 
 function grouppeerreview_get_data_for_csv($grouppeerreview) {
     global $DB;
-    
+
     $cm = get_coursemodule_from_instance('grouppeerreview', $grouppeerreview->id);
     $context = context_module::instance($cm->id);
-    
+
     $reviews = array();
     $groups = grouppeerreview_get_groups($grouppeerreview);
     foreach ($groups as $group) {
         $groupmembers = groups_get_members($group->id);
         foreach ($groupmembers as $groupmember) {
             if (!has_capability('mod/grouppeerreview:bereviewed', $context, $groupmember->id)) {
-                // This person does not get reviewed;
+                // This person does not get reviewed.
                 continue;
             }
             $reviewers = (object) grouppeerreview_get_group_member_grades($grouppeerreview, $group->id, $groupmember->id);

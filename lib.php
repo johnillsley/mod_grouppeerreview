@@ -72,7 +72,7 @@ function grouppeerreview_supports($feature) {
 function grouppeerreview_add_instance($grouppeerreview) {
     global $CFG, $DB;
     require_once($CFG->dirroot . '/mod/grouppeerreview/locallib.php');
-    
+
     $grouppeerreview->timemodified = time();
 
     // Get groupingid from assignment and use for group peer review.
@@ -139,13 +139,47 @@ function grouppeerreview_update_instance($grouppeerreview) {
 }
 
 /**
+ * Return grade for given user or all users.
+ *
+ * @param stdClass $grouppeerreview record of grouppeerreview with an additional cmidnumber
+ * @param int $userid optional user id, 0 means all users
+ * @return array array of grades, false if none
+ */
+function grouppeerreview_get_user_grades($grouppeerreview, $userid=0) {
+    global $CFG;
+
+    require_once($CFG->dirroot . '/mod/assign/locallib.php');
+
+    $cm = get_coursemodule_from_instance('grouppeerreview', $grouppeerreview->id, 0, false, MUST_EXIST);
+    $context = context_module::instance($cm->id);
+    $assignment = new assign($context, null, null);
+    $assignment->set_instance($assign);
+    return $assignment->get_user_grades_for_gradebook($userid);
+}
+
+/**
+ * Update activity grades
+ *
+ * @category grade
+ * @param stdClass $grouppeerreview Null means all grouppeerreviews (with extra cmidnumber property)
+ * @param int $userid specific user only, 0 means all
+ * @param bool $nullifnone If true and the user has no grade then a grade item with rawgrade == null will be inserted
+ */
+function grouppeerreview_update_grades($grouppeerreview=null, $userid=0, $nullifnone=true) {
+    global $CFG, $DB;
+    require_once($CFG->libdir.'/gradelib.php');
+
+    grouppeerreview_grade_item_update($grouppeerreview);
+}
+
+/**
  * Create/update grade item for given grouppeerreview
  *
  * @uses GRADE_TYPE_VALUE
  * @param stdClass $grouppeerreview object with extra cmidnumber
  * @param mixed $grades Optional array/object of grade(s); 'reset' means reset grades in gradebook
  * @return int 0 if ok
-*/
+ */
 function grouppeerreview_grade_item_update($grouppeerreview, $grades=null) {
     global $CFG;
 
@@ -153,7 +187,6 @@ function grouppeerreview_grade_item_update($grouppeerreview, $grades=null) {
         require_once($CFG->libdir . '/gradelib.php');
     }
     $params = array('itemname' => $grouppeerreview->name, 'idnumber' => $grouppeerreview->cmidnumber);
-    
     if (isset($grouppeerreview->maximumgrade)) {
         $params['gradetype'] = GRADE_TYPE_VALUE;
         $params['grademax'] = $grouppeerreview->maximumgrade;
@@ -788,7 +821,7 @@ function grouppeerreview_get_recent_mod_activity(&$activities, &$index, $timesta
 
         if ($groupmode) {
             if ($groupmode == VISIBLEGROUPS or $accessallgroups) {
-                // Oki (Open discussions have groupid -1).
+
             } else {
                 // Separate mode.
                 if (isguestuser()) {
@@ -962,18 +995,7 @@ function grouppeerreview_print_recent_activity($course, $viewfullnames, $timesta
         }
 
         $context = context_module::instance($submission->cmid);
-        /*
-        // The act of submitting of assignment may be considered private -
-        // only graders will see it if specified.
-        if (empty($showrecentsubmissions)) {
-            if (!array_key_exists($cm->id, $grader)) {
-                $grader[$cm->id] = has_capability('moodle/grade:viewall', $context);
-            }
-            if (!$grader[$cm->id]) {
-                continue;
-            }
-        }
-        */
+
         $groupmode = groups_get_activity_groupmode($cm, $course);
 
         if ($groupmode == SEPARATEGROUPS &&

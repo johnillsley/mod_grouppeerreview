@@ -55,7 +55,6 @@ class restore_grouppeerreview_activity_task extends restore_activity_task {
         $contents = array();
 
         $contents[] = new restore_decode_content('grouppeerreview', array('intro'), 'grouppeerreview');
-        $contents[] = new restore_decode_content('grouppeerreview', array('studentinstructions'), 'grouppeerreview');
 
         return $contents;
     }

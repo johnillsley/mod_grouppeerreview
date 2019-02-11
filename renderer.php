@@ -291,7 +291,7 @@ class mod_grouppeerreview_renderer extends plugin_renderer_base {
     }
 
     public function summary_intro($grouppeerreview) {
-        
+
         $assign = get_coursemodule_from_instance('assign', $grouppeerreview->assignid);
         $assignlink = html_writer::link(new moodle_url('/mod/assign/view.php', array('id' => $assign->id)), $assign->name);
         $connectedassign = html_writer::tag('li', get_string("connectedassign", "grouppeerreview") . ": " . $assignlink);
@@ -301,10 +301,10 @@ class mod_grouppeerreview_renderer extends plugin_renderer_base {
         } else {
             $selfassess = html_writer::tag('li', get_string('selfassessno', 'grouppeerreview'));
         }
-        
+
         return html_writer::tag('ul', $connectedassign . $weighting . $selfassess);
     }
-    
+
     public function group_report($report, $groupid, $cm) {
         global $COURSE, $DB;
 

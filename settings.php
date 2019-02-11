@@ -38,7 +38,7 @@ if ($ADMIN->fulltree) {
             get_string('defaultinstructions', 'grouppeerreview'),
             get_string('defaultinstructions_desc', 'grouppeerreview'),
             get_string('instructions_default', 'grouppeerreview')));
-    
+
     $settings->add(new admin_setting_configtext(
             'mod_grouppeerreview/defaultweighting',
             get_string('defaultweighting', 'grouppeerreview'),
@@ -50,11 +50,4 @@ if ($ADMIN->fulltree) {
             get_string('algorithmexplaination', 'grouppeerreview'),
             get_string('algorithmexplaination_desc', 'grouppeerreview'),
             get_string('calculations', 'grouppeerreview')));
-/*
-    $settings->add(new admin_setting_configcheckbox(
-            'mod_grouppeerreview/gradecategory',
-            get_string('gradecategory', 'grouppeerreview'),
-            get_string('gradecategory_desc', 'grouppeerreview'),
-            1));
-*/
 }

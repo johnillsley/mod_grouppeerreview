@@ -95,10 +95,14 @@ foreach ($grouppeerreviews as $grouppeerreview) {
         $responses = grouppeerreview_get_reviews($grouppeerreview, null, null, $USER->id);
         $submissiontimes = array_map(function ($i) {
             return $i->timemodified;
-            }
+        }
             , $responses
         );
-        $status = userdate(max($submissiontimes));
+        if (count($submissiontimes) > 0) {
+            $status = userdate(max($submissiontimes));
+        } else {
+            $status = get_string('nosubmissions', 'grouppeerreview');
+        }
     }
 
     if ($usesections) {

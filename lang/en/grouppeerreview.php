@@ -77,6 +77,7 @@ $string['nextgroup'] = 'Next group';
 $string['nodeadline'] = 'No deadline';
 $string['noreply'] = 'no&nbsp;reply';
 $string['noresultsviewable'] = 'The results are not currently viewable.';
+$string['nosubmissions'] = 'You have not made a submission';
 $string['notbeingreviewed'] = 'not being reviewed';
 $string['nothingtoreview'] = 'You cannot see the group peer review rating form because you are not in any of the groups that are included.';
 $string['notopenyet'] = 'This group peer review opens on {$a}.';

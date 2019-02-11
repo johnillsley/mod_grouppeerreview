@@ -103,4 +103,11 @@ class report_downloaded extends \core\event\base {
     public static function get_objectid_mapping() {
         return array('db' => 'grouppeerreview', 'restore' => 'grouppeerreview');
     }
+
+    public static function get_other_mapping() {
+        $othermapped = array();
+        $othermapped['grouppeerreviewid'] = array('db' => 'grouppeerreview', 'restore' => 'grouppeerreview');
+
+        return $othermapped;
+    }
 }
