@@ -72,7 +72,7 @@ class mod_grouppeerreview_privacy_provider_testcase extends \core_privacy\tests\
             $this->getDataGenerator()->enrol_user($user->id, $this->course->id, $studentroleid);
             $this->getDataGenerator()->create_group_member(array('userid' => $user->id, 'groupid' => $this->group->id));
         }
-        $this->user = $user; // Make last student accessible to tests.
+        $this->user = $user; // Make last student accessible to tests through class property.
 
         $grouping = $this->getDataGenerator()->create_grouping(array('courseid' => $this->course->id));
         $this->getDataGenerator()->create_grouping_group(array('groupingid' => $grouping->id, 'groupid' => $this->group->id));
@@ -102,22 +102,24 @@ class mod_grouppeerreview_privacy_provider_testcase extends \core_privacy\tests\
         $timestamp = 200000;
         $members = groups_get_members($this->group->id);
 
-        $records = array();
-        $grade = 0;
-        foreach ($members as $member) {
-            $records[] = array(
-                    'userid' => $member->id,
-                    'peerid' => $this->grouppeerreview->id,
-                    'groupid' => $this->group->id,
-                    'reviewerid' => $this->user->id,
-                    'grade' => $grade,
-                    'comment' => 'test' . $grade,
-                    'timemodified' => $timestamp,
-            );
-            $grade++;
+        foreach ($members as $reviewer) {
+            $grade = 0;
+            $records = array();
+            foreach ($members as $user) {
+                $records[$user->id] = array(
+                        'userid' => $user->id,
+                        'peerid' => $this->grouppeerreview->id,
+                        'groupid' => $this->group->id,
+                        'reviewerid' => $reviewer->id,
+                        'grade' => $grade,
+                        'comment' => 'test' . $grade,
+                        'timemodified' => $timestamp,
+                );
+                $grade++;
+            }
+            $reviews = [$this->group->id => $records];
+            grouppeerreview_user_submit_response($this->grouppeerreview, $reviews, $reviewer->id, $this->course, $this->cm);
         }
-        $reviews = [$this->group->id => $records];
-        grouppeerreview_user_submit_response($this->grouppeerreview, $reviews, $this->user->id, $this->course, $this->cm);
     }
 
     /**
@@ -167,104 +169,103 @@ class mod_grouppeerreview_privacy_provider_testcase extends \core_privacy\tests\
         $this->export_context_data_for_user($this->user->id, $cmcontext, 'mod_grouppeerreview');
         $writer = \core_privacy\local\request\writer::with_context($cmcontext);
 
-        // $this->assertTrue($writer->has_any_data());
+        $this->assertTrue($writer->has_any_data());
     }
 
     /**
      * Test for provider::delete_data_for_all_users_in_context().
      */
-
-    /*
     public function test_delete_data_for_all_users_in_context() {
         global $DB;
 
-        $choice = $this->choice;
-        $generator = $this->getDataGenerator();
-        $cm = get_coursemodule_from_instance('choice', $this->choice->id);
-
-        // Create another student who will answer the choice activity.
-        $student = $generator->create_user();
-        $studentrole = $DB->get_record('role', ['shortname' => 'student']);
-        $generator->enrol_user($student->id, $this->course->id, $studentrole->id);
-
-        $choicewithoptions = choice_get_choice($choice->id);
-        $optionids = array_keys($choicewithoptions->option);
-
-        choice_user_submit_response($optionids[1], $choice, $student->id, $this->course, $cm);
+        $grouppeerreview = $this->grouppeerreview;
 
         // Before deletion, we should have 2 responses.
-        $count = $DB->count_records('choice_answers', ['choiceid' => $choice->id]);
-        $this->assertEquals(2, $count);
+        $count = $DB->count_records('grouppeerreview_marks', ['peerid' => $grouppeerreview->id]);
+        $this->assertEquals(16, $count);
 
         // Delete data based on context.
-        $cmcontext = context_module::instance($cm->id);
+        $cmcontext = context_module::instance($this->cm->id);
         provider::delete_data_for_all_users_in_context($cmcontext);
 
-        // After deletion, the choice answers for that choice activity should have been deleted.
-        $count = $DB->count_records('choice_answers', ['choiceid' => $choice->id]);
+        // After deletion, the grouppeerreview_marks for that grouppeerreview activity should have been deleted.
+        $count = $DB->count_records('grouppeerreview_marks', ['peerid' => $grouppeerreview->id]);
         $this->assertEquals(0, $count);
     }
-*/
 
     /**
      * Test for provider::delete_data_for_user().
      */
-    /*
     public function test_delete_data_for_user_() {
         global $DB;
 
-        $choice = $this->choice;
-        $generator = $this->getDataGenerator();
-        $cm1 = get_coursemodule_from_instance('choice', $this->choice->id);
-
-        // Create a second choice activity.
-        $options = ['Boracay', 'Camiguin', 'Bohol', 'Cebu', 'Coron'];
-        $params = [
-                'course' => $this->course->id,
-                'option' => $options,
-                'name' => 'Which do you think is the best island in the Philippines?',
-                'showpreview' => 0
-        ];
-        $plugingenerator = $generator->get_plugin_generator('mod_choice');
-        $choice2 = $plugingenerator->create_instance($params);
-        $plugingenerator->create_instance($params);
-        $cm2 = get_coursemodule_from_instance('choice', $choice2->id);
-
-        // Make a selection for the first student for the 2nd choice activity.
-        $choicewithoptions = choice_get_choice($choice2->id);
-        $optionids = array_keys($choicewithoptions->option);
-        choice_user_submit_response($optionids[2], $choice2, $this->student->id, $this->course, $cm2);
-
-        // Create another student who will answer the first choice activity.
-        $otherstudent = $generator->create_user();
-        $studentrole = $DB->get_record('role', ['shortname' => 'student']);
-        $generator->enrol_user($otherstudent->id, $this->course->id, $studentrole->id);
-
-        $choicewithoptions = choice_get_choice($choice->id);
-        $optionids = array_keys($choicewithoptions->option);
-
-        choice_user_submit_response($optionids[1], $choice, $otherstudent->id, $this->course, $cm1);
+        $grouppeerreview = $this->grouppeerreview;
 
         // Before deletion, we should have 2 responses.
-        $count = $DB->count_records('choice_answers', ['choiceid' => $choice->id]);
-        $this->assertEquals(2, $count);
+        $count = $DB->count_records('grouppeerreview_marks', ['peerid' => $grouppeerreview->id]);
+        $this->assertEquals(16, $count);
 
-        $context1 = context_module::instance($cm1->id);
-        $context2 = context_module::instance($cm2->id);
-        $contextlist = new \core_privacy\local\request\approved_contextlist($this->student, 'choice',
-                [context_system::instance()->id, $context1->id, $context2->id]);
+        // Delete data based on context.
+        $cmcontext = context_module::instance($this->cm->id);
+        $contextlist = new \core_privacy\local\request\approved_contextlist($this->user, 'grouppeerreview',
+                [context_system::instance()->id, $cmcontext->id]);
+        
         provider::delete_data_for_user($contextlist);
 
-        // After deletion, the choice answers for the first student should have been deleted.
-        $count = $DB->count_records('choice_answers', ['choiceid' => $choice->id, 'userid' => $this->student->id]);
-        $this->assertEquals(0, $count);
+        // After deletion, the grouppeerreview_marks for that student should have been deleted, which will leave 9 left.
+        $count = $DB->count_records('grouppeerreview_marks', ['peerid' => $grouppeerreview->id]);
+        $this->assertEquals(9, $count);
 
-        // Confirm that we only have one choice answer available.
-        $choiceanswers = $DB->get_records('choice_answers');
-        $this->assertCount(1, $choiceanswers);
-        $lastresponse = reset($choiceanswers);
-        // And that it's the other student's response.
-        $this->assertEquals($otherstudent->id, $lastresponse->userid);
+        // Check that there are none left for the selected user.
+        $count = $DB->count_records_sql('
+                SELECT count(*) 
+                FROM {grouppeerreview_marks}
+                WHERE (userid = ' . $this->user->id . ' OR reviewerid = '. $this->user->id .')
+                AND peerid = ' . $grouppeerreview->id
+                );
+        $this->assertEquals(0, $count);
     }
-    */
+
+    /**
+     * Export all data within a context for a component for the specified user.
+     *
+     * @param   int         $userid     The userid of the user to fetch.
+     * @param   \context    $context    The context to export data for.
+     * @param   string      $component  The component to get export data for.
+     */
+    public function export_context_data_for_user(int $userid, \context $context, string $component) {
+        $contextlist = new \core_privacy\tests\request\approved_contextlist(
+                \core_user::get_user($userid),
+                $component,
+                [$context->id]
+        );
+
+        $classname = $this->get_provider_classname($component);
+        $classname::export_user_data($contextlist);
+    }
+
+    /**
+     * Determine the classname and ensure that it is a provider.
+     *
+     * @param   string      $component      The classname.
+     * @return  string
+     */
+    protected function get_provider_classname($component) {
+        $classname = "\\${component}\\privacy\\provider";
+
+        if (!class_exists($classname)) {
+            throw new \coding_exception("{$component} does not implement any provider");
+        }
+
+        $rc = new \ReflectionClass($classname);
+        if (!$rc->implementsInterface(\core_privacy\local\metadata\provider::class)) {
+            throw new \coding_exception("{$component} does not implement metadata provider");
+        }
+
+        if (!$rc->implementsInterface(\core_privacy\local\request\core_user_data_provider::class)) {
+            throw new \coding_exception("{$component} does not declare that it provides any user data");
+        }
+
+        return $classname;
+    }
 }

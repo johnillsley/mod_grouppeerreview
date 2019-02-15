@@ -55,7 +55,6 @@ if ($action !== '') {
 }
 $PAGE->set_url($url);
 $PAGE->set_context(context_module::instance($id));
-$PAGE->set_pagelayout('base');
 $PAGE->set_title($grouppeerreview->name);
 $PAGE->set_heading($course->fullname);
 

@@ -83,6 +83,9 @@ function grouppeerreview_get_summary($grouppeerreview, $groups) {
 function grouppeerreview_get_reviews($grouppeerreview, $groupid = null, $userid = null, $reviewerid = null) {
     global $DB;
 
+    $cm = get_coursemodule_from_instance('grouppeerreview', $grouppeerreview->id);
+    $context = context_module::instance($cm->id);
+
     $params = array();
     $params[] = $grouppeerreview->id;
 
@@ -136,6 +139,12 @@ function grouppeerreview_get_reviews($grouppeerreview, $groupid = null, $userid 
         ORDER BY gprm.groupid, u1.lastname, u1.firstname, u2.lastname, u2.firstname
         ', $params);
 
+    foreach ($reviews as $k => $review) {
+        if (!has_capability('mod/grouppeerreview:bereviewed', $context, $review->userid)) {
+            unset($reviews[$k]);
+        }
+    }
+
     return $reviews;
 }
 
@@ -143,7 +152,7 @@ function grouppeerreview_check_all_responses($grouppeerreview, $userid) {
     $userresponses = grouppeerreview_prepare_options($grouppeerreview, $userid);
     $cm = get_coursemodule_from_instance('grouppeerreview', $grouppeerreview->id);
     $context = context_module::instance($cm->id);
-    
+
     $allcomplete = true;
     foreach ($userresponses["groups"] as $groups) {
         foreach ($groups->members as $review) {
@@ -156,7 +165,6 @@ function grouppeerreview_check_all_responses($grouppeerreview, $userid) {
                 break 2;
             }
         }
-
     }
     return $allcomplete;
 }
@@ -167,12 +175,19 @@ function grouppeerreview_get_report($grouppeerreview, $groupid) {
     $cm = get_coursemodule_from_instance('grouppeerreview', $grouppeerreview->id);
     $context = context_module::instance($cm->id);
     $members = groups_get_members($groupid, 'u.id, u.firstname, u.lastname');
-
+    foreach ($members as $k => $member) {
+        if (!has_capability('mod/grouppeerreview:bereviewed', $context, $member->id)) {
+            // If they shouldn't be reviewed take them off the report.
+            unset($members[$k]);
+        }
+    }
     $gradebookgrades = grouppeerreview_get_grade_items($grouppeerreview, array_column($members, 'id'));
+
     $groupmark = grouppeerreview_get_group_mark($grouppeerreview, $members);
     $maxgrade = $DB->get_field('assign', 'grade', array('id' => $grouppeerreview->assignid));
+
     if (is_numeric($groupmark)) {
-        $peerreviewbase = $groupmark * $grouppeerreview->weighting / $maxgrade;
+        $peerreviewbase = $groupmark * $grouppeerreview->weighting / 100;
         $adjustedmark = $groupmark - $peerreviewbase;
     } else {
         $peerreviewbase = $maxgrade; // For display of results in the absence of a group mark.
@@ -260,7 +275,6 @@ function grouppeerreview_prepare_options($grouppeerreview, $userid = null) {
             AND u.deleted = 0
             ORDER BY u.lastname ASC, u.firstname ASC", $params
         );
-
         $groups[$key]->members = $members;
     }
     $prdisplay['groups'] = $groups;
@@ -286,8 +300,17 @@ function grouppeerreview_get_group_mark($grouppeerreview, $members) {
 function grouppeerreview_get_group_member_grades($grouppeerreview, $groupid, $userid) {
     global $DB;
 
+    $cm = get_coursemodule_from_instance('grouppeerreview', $grouppeerreview->id);
+    $context = context_module::instance($cm->id);
+
+    $params = array();
+    $params[] = $grouppeerreview->id;
+    $params[] = $userid;
+    $params[] = $groupid;
+
     if ($grouppeerreview->selfassess == 0) {
-        $extrasql = "AND gm.userid != " . $userid;
+        $extrasql = "AND gm.userid != ?";
+        $params[] = $userid;
     } else {
         $extrasql = "";
     }
@@ -299,26 +322,42 @@ function grouppeerreview_get_group_member_grades($grouppeerreview, $groupid, $us
         , prm.grade
         , prm.comment
         , prm.timemodified
-        , reviewer.total
         FROM {groups_members} gm
         LEFT JOIN {user} u
           ON u.id = gm.userid
         LEFT JOIN {grouppeerreview_marks} prm
           ON prm.groupid = gm.groupid
           AND prm.reviewerid = gm.userid
-          AND prm.peerid = " . $grouppeerreview->id . "
-          AND prm.userid = " . $userid . "
-        LEFT JOIN (
-            SELECT prm2.reviewerid, SUM(prm2.grade) total
-            FROM {grouppeerreview_marks} prm2
-            WHERE prm2.groupid = " . $groupid . "
-            AND prm2.peerid = " . $grouppeerreview->id . "
-            GROUP BY prm2.reviewerid
-        ) reviewer ON prm.reviewerid = reviewer.reviewerid
-        WHERE gm.groupid = " . $groupid . "
+          AND prm.peerid = ?
+          AND prm.userid = ?
+        WHERE gm.groupid = ?
         " . $extrasql . "
-        ORDER BY u.lastname, u.firstname");
+        ORDER BY u.lastname, u.firstname", $params
+    );
 
+    foreach ($grades as $k => $grade) {
+
+        $total = 0;
+        $params = array();
+        $params[] = $grade->reviewerid;
+        $params[] = $groupid;
+        $params[] = $grouppeerreview->id;
+
+        $reviewergrades = $DB->get_records_sql("
+            SELECT prm2.userid, prm2.grade
+            FROM {grouppeerreview_marks} prm2
+            WHERE prm2.reviewerid = ?
+            AND prm2.groupid = ?
+            AND prm2.peerid = ?", $params);
+
+        foreach ($reviewergrades as $reviewergrade) {
+            // Get only grades allocated to people who have permission to be reviewed and total.
+            if ((has_capability('mod/grouppeerreview:bereviewed', $context, $reviewergrade->userid))) {
+                $total += $reviewergrade->grade;
+            }
+        }
+        $grades[$k]->total = $total;
+    }
     return $grades;
 }
 
@@ -345,7 +384,7 @@ function grouppeerreview_user_submit_response($grouppeerreview, $reviews, $revie
     foreach ($reviews as $groupid => $users) {
         foreach ($users as $userid => $review) {
             if ((has_capability('mod/grouppeerreview:bereviewed', $context, $userid))) {
-                if ($review['grade'] == "") {
+                if ($review['grade'] === "") {
                     $review['grade'] = null;
                 }
                 $conditions = new stdClass();
@@ -517,10 +556,12 @@ function grouppeerreview_set_events($grouppeerreview) {
     }
 }
 
-function grouppeerreview_get_response_count($gpr) {
+function grouppeerreview_get_response_count($grouppeerreview) {
     global $DB;
 
-    $grouppeerreview = $DB->get_record("grouppeerreview", array("id" => $gpr->id));
+    $cm = get_coursemodule_from_instance('grouppeerreview', $grouppeerreview->id);
+    $context = context_module::instance($cm->id);
+
     $params = array();
     $params[] = $grouppeerreview->course;
     $params[] = $grouppeerreview->id;
@@ -534,8 +575,8 @@ function grouppeerreview_get_response_count($gpr) {
         $groupingwhere = "";
     }
 
-    $responsecount = $DB->count_records_sql("
-            SELECT COUNT(gprm.id)
+    $responses = $DB->get_records_sql("
+            SELECT gprm.id, gprm.userid
             FROM {grouppeerreview} gpr
             JOIN {grouppeerreview_marks} gprm
             JOIN {groups} gr
@@ -551,9 +592,15 @@ function grouppeerreview_get_response_count($gpr) {
             AND gprm.peerid = gpr.id
             AND gpr.id = ?
             AND gprm.grade IS NOT NULL
-            " . $groupingwhere . "
-    ", $params);
+            " . $groupingwhere , $params
+    );
 
+    $responsecount = 0;
+    foreach ($responses as $response) {
+        if ((has_capability('mod/grouppeerreview:bereviewed', $context, $response->userid))) {
+            $responsecount++;
+        }
+    }
     return $responsecount;
 }
 

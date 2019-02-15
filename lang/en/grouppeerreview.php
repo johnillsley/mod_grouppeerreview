@@ -25,6 +25,7 @@
 $string['actualresponses'] = 'Actual responses';
 $string['algorithmexplaination'] = 'Algorithm explanation';
 $string['algorithmexplaination_desc'] = 'How are the group peer review grades calculated';
+$string['assigndeleted'] = 'The assignment has been deleted';
 $string['assignmentnotmarked'] = 'Group assignment not marked';
 $string['assignmentselect'] = 'Select the group assignment to apply peer review';
 $string['assignmentselect_help'] = 'You can only select assignments that have been configured from group submission.';
@@ -87,7 +88,7 @@ $string['peerclose'] = 'Review end time';
 $string['peeropen'] = 'Review start time';
 $string['peersaved'] = 'Your review grades and comments have been saved';
 $string['pleaseselect'] = 'Please select...';
-$string['pluginadministration'] = 'Peer review administration';
+$string['pluginadministration'] = 'Group peer review administration';
 $string['pluginname'] = 'Group peer review';
 $string['pluginsettings'] = 'Group peer review settings';
 $string['previousgroup'] = 'Previous group';
@@ -114,22 +115,34 @@ $string['viewresponses'] = 'View responses';
 $string['weightedgroupmark'] = 'Weighted group mark';
 $string['weightedpeermark'] = 'Weighted peer mark';
 $string['weighting'] = 'Peer review weighting (%)';
+$string['yourresponses'] = 'Your responses';
 $string['yourreview'] = 'Your&nbsp;rating';
 
-$string['instructions_default'] = '<h5>Instructions for Peer Assessments</h5><p></p>
-<ul><li>Scroll down to the form where you can enter the ratings for the members of your group.</li>
+$string['privacy:metadata:grouppeerreview_marks'] = 'Information about responses for a given group peer review activity';
+$string['privacy:metadata:grouppeerreview_marks:peerid'] = 'The ID of the group peer review activity';
+$string['privacy:metadata:grouppeerreview_marks:groupid'] = 'The ID of the group that the response belongs to';
+$string['privacy:metadata:grouppeerreview_marks:userid'] = 'The ID of the user receiving a review in this group peer review activity';
+$string['privacy:metadata:grouppeerreview_marks:reviewerid'] = 'The ID of the user producing a review in this group peer review activity';
+$string['privacy:metadata:grouppeerreview_marks:grade'] = 'The grade that was recorded for the review within this group peer review activity';
+$string['privacy:metadata:grouppeerreview_marks:comment'] = 'The comment that was recorded for the review within this group peer review activity';
+$string['privacy:metadata:grouppeerreview_marks:timemodified'] = 'The timestamp indicating when the review was modified by the user';
+
+$string['instructions_default'] = '<h5>Instructions for Peer Assessments</h5>
+<ul>
+<li>Scroll down to the form where you can enter the ratings for the members of your group.</li>
 <li>You must assess everyone in your group.</li>
 <li>Read over the criteria for peer assessments carefully. You are expected to follow them faithfully in your judgements.</li>
 <li>Your judgements should be careful and fair. They should be unaffected by how much you like or dislike others or their points of view, just as you presumably would want others to use impartial standards when evaluating you.</li>
 <li>These evaluations will be absolutely confidential. No student will have any access to your evaluations at any time. Each student will be informed about the overall picture of the evaluations she or he has received from others. No student should ask any other student about these evaluations.<br></li>
-</ul><h5 style="color: #D27">Criteria for Peer Assessments</h5><p></p><p></p>
-<ul><li><b><i>Does Not Meet Expectations</i>: (lowest grade 1)
+</ul>
+<h5 style="color: #D27">Criteria for Peer Assessments</h5>
+<ul>
+<li><b><i>Does Not Meet Expectations</i>: (lowest grade 0)
 <br></b>This person contributed the least amount of ideas and work, significantly below others in the group.</li>
-<li><span><i style="font-weight: bold;">Meets Expectations</i><b>: (middle grade 3)
-<br></b></span>Made a fair and average contribution to the paper.</li>
+<li><span><i style="font-weight: bold;">Meets Expectations</i><b>: (middle grade 3)<br></b></span>Made a fair and average contribution to the paper.</li>
 <li><span><i style="font-weight: bold;">Exceeds Expectations</i><b>: (highest grade 5)
 <br></b></span>Paper reflects more of this person\'s ideas and work than that of anyone else in the group.</li>
-</ul><p></p>';
+</ul>';
 
 $string['selectassignment_help'] = 'Only assignments that are configured for group submission are listed here. The grouping selected
  for the assignment is inherited for the group peer review.';
@@ -142,13 +155,14 @@ $string['modulename_help'] = 'The group peer review activity can be used alongsi
 
 $string['calculations'] = '<strong>How are group peer review marks calculated?</strong>
 <ul>
-<li>Firstly all the ratings <u>allocated</u> by a student are totalled.</li>
+<li>Firstly all the ratings <u>allocated</u> by all users are totalled.</li>
 <li>This total is now divided into each of their <u>allocated</u> ratings to give a normalised rating for each of their allocations.</li>
 <li>All the normalised ratings <u>received</u> by a student are then totalled.</li>
 <li>The normalised total is now multiplied by the number of students in the group and then divided by the number of actual responses.
-This compensated normalised total adjusts for any students in the group that did not provide a rating.</li>
+ This compensated normalised total adjusts for situations where the number of ratings does not equal the number of students.
+ This can happen if a student fails to complete their ratings or non students are added to the group that make additional ratings.</li>
 <li>The peer review percentage weighting is now applied to the original group mark and the peer marks (compensated normalised total). See below...</li>
 </ul>
-Weighted group mark (for all students) = (100 - %weighting)/100 * Orignal group mark<br/>
-Weighted peer mark (for each student)  = %weighting * compensated normalised rating<br/><br/>
+Weighted group mark (for all students) = (100 - %weighting)/100 * Original group mark<br/>
+Weighted peer mark (for each student)  = %weighting/100 * compensated normalised rating * Original Group Mark<br/><br/>
 Final mark = Weighted group mark + Weighted peer mark';

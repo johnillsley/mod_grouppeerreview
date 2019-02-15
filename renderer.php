@@ -269,7 +269,7 @@ class mod_grouppeerreview_renderer extends plugin_renderer_base {
             $responsescomplete = ($gsummary->expected_responses == $gsummary->actual_responses)
                     ? ' ' . $this->output->pix_icon('i/valid', get_string('yes'))
                     : '';
-            $gradebookcomplete = (($gsummary->member_count - $gsummary->not_reviewed) == $gsummary->in_gradebook)
+            $gradebookcomplete = (($gsummary->member_count - $gsummary->not_reviewed) <= $gsummary->in_gradebook)
                     ? ' ' . $this->output->pix_icon('i/valid', get_string('yes'))
                     : '';
 
@@ -291,18 +291,40 @@ class mod_grouppeerreview_renderer extends plugin_renderer_base {
     }
 
     public function summary_intro($grouppeerreview) {
+        global $USER;
 
-        $assign = get_coursemodule_from_instance('assign', $grouppeerreview->assignid);
-        $assignlink = html_writer::link(new moodle_url('/mod/assign/view.php', array('id' => $assign->id)), $assign->name);
-        $connectedassign = html_writer::tag('li', get_string("connectedassign", "grouppeerreview") . ": " . $assignlink);
+        // Is there a final grade to display?
+        $grade = grouppeerreview_get_user_grades($grouppeerreview, $USER->id);
+        if ($grouppeerreview->timeclose < time() && isset($grade->grade)) {
+            $finalgrade = html_writer::tag('li',
+                    '<strong>' . get_string("finalmark", "grouppeerreview") . ": ". $grade->str_long_grade . "</strong>");
+        } else {
+            $finalgrade = '';
+        }
+        
+        // Connected assignment.
+        if (!$assign = get_coursemodule_from_instance('assign', $grouppeerreview->assignid)) {
+            $connectedassign = html_writer::tag('li', get_string("connectedassign", "grouppeerreview") . ": "
+                    . get_string("assigndeleted", "grouppeerreview"));
+        } elseif ($assign->deletioninprogress == 1) {
+            $connectedassign = html_writer::tag('li', get_string("connectedassign", "grouppeerreview") . ": "
+                    . get_string("assigndeleted", "grouppeerreview"));
+        } else {
+            $assignlink = html_writer::link(new moodle_url('/mod/assign/view.php', array('id' => $assign->id)), $assign->name);
+            $connectedassign = html_writer::tag('li', get_string("connectedassign", "grouppeerreview") . ": " . $assignlink);       
+        }
+
+        // Group peer review weighting.
         $weighting = html_writer::tag('li', get_string('weighting', 'grouppeerreview').': '.$grouppeerreview->weighting);
+        
+        // Are students required to do self assessment.
         if ($grouppeerreview->selfassess == 1) {
             $selfassess = html_writer::tag('li', get_string('selfassessyes', 'grouppeerreview'));
         } else {
             $selfassess = html_writer::tag('li', get_string('selfassessno', 'grouppeerreview'));
         }
 
-        return html_writer::tag('ul', $connectedassign . $weighting . $selfassess);
+        return html_writer::tag('ul', $finalgrade . $connectedassign . $weighting . $selfassess);
     }
 
     public function group_report($report, $groupid, $cm) {
@@ -314,7 +336,7 @@ class mod_grouppeerreview_renderer extends plugin_renderer_base {
                 "method" => "post"
         );
         $html = '';
-        $html .= html_writer::tag('h4', 'Responses for selected group');
+        $html .= html_writer::tag('h4', get_string('responsesforgroup', 'grouppeerreview'));
         $html .= html_writer::start_tag('div', array("id" => "grouppeerreview-report", "class" => "grouppeerreview-report"));
         $html .= html_writer::start_tag('form', $formattributes);
         $html .= html_writer::tag('input', '', array("type" => "hidden", "name" => "groupid", "value" => $groupid));

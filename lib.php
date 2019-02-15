@@ -75,11 +75,10 @@ function grouppeerreview_add_instance($grouppeerreview) {
 
     $grouppeerreview->timemodified = time();
 
-    // Get groupingid from assignment and use for group peer review.
-    $grouppeerreview->groupingid = $DB->get_field(
-            'assign',
-            'teamsubmissiongroupingid',
-            array('teamsubmission' => 1, 'id' => $grouppeerreview->assignid));
+    // Get groupingid and maxgrade from assignment and use for group peer review.
+    $assign = $DB->get_record('assign', array('teamsubmission' => 1, 'id' => $grouppeerreview->assignid));
+    $grouppeerreview->groupingid = $assign->teamsubmissiongroupingid;
+    $grouppeerreview->maximumgrade = $assign->grade;
 
     if (empty($grouppeerreview->site_after_submit)) {
         $grouppeerreview->site_after_submit = '';
@@ -96,7 +95,6 @@ function grouppeerreview_add_instance($grouppeerreview) {
         \core_completion\api::update_completion_date_event($cm->id, 'grouppeerreview', $grouppeerreview->id,
             $grouppeerreview->completionexpected);
     }
-
     return $grouppeerreview->id;
 }
 
@@ -114,11 +112,10 @@ function grouppeerreview_update_instance($grouppeerreview) {
     $grouppeerreview->timemodified = time();
     $grouppeerreview->id = $grouppeerreview->instance;
 
-    // Get groupingid from assignment and use for group peer review.
-    $grouppeerreview->groupingid = $DB->get_field(
-            'assign',
-            'teamsubmissiongroupingid',
-            array('teamsubmission' => 1, 'id' => $grouppeerreview->assignid));
+    // Get groupingid and maxgrade from assignment and use for group peer review.
+    $assign = $DB->get_record('assign', array('teamsubmission' => 1, 'id' => $grouppeerreview->assignid));
+    $grouppeerreview->groupingid = $assign->teamsubmissiongroupingid;
+    $grouppeerreview->maximumgrade = $assign->grade;
 
     if (empty($grouppeerreview->site_after_submit)) {
         $grouppeerreview->site_after_submit = '';
@@ -139,23 +136,22 @@ function grouppeerreview_update_instance($grouppeerreview) {
 }
 
 /**
- * Return grade for given user or all users.
+ * Return grade for given user.
  *
  * @param stdClass $grouppeerreview record of grouppeerreview with an additional cmidnumber
- * @param int $userid optional user id, 0 means all users
- * @return array array of grades, false if none
+ * @param int $userid user id
+ * @return stdClass grade information
  */
-function grouppeerreview_get_user_grades($grouppeerreview, $userid=0) {
+
+function grouppeerreview_get_user_grades($grouppeerreview, $userid) {
     global $CFG;
 
-    require_once($CFG->dirroot . '/mod/assign/locallib.php');
-
-    $cm = get_coursemodule_from_instance('grouppeerreview', $grouppeerreview->id, 0, false, MUST_EXIST);
-    $context = context_module::instance($cm->id);
-    $assignment = new assign($context, null, null);
-    $assignment->set_instance($assign);
-    return $assignment->get_user_grades_for_gradebook($userid);
+    require_once($CFG->libdir . '/gradelib.php');
+    $grades = grade_get_grades($grouppeerreview->course, 'mod', 'grouppeerreview', $grouppeerreview->id, array($userid));
+    
+    return array_pop($grades->items[0]->grades);
 }
+
 
 /**
  * Update activity grades

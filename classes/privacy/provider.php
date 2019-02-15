@@ -118,7 +118,6 @@ class provider implements
 
         $sql = "SELECT cm.id AS cmid,
                        gpr.name,
-                       gprm.id,
                        gprm.peerid,
                        gprm.groupid,
                        gprm.userid,
@@ -143,6 +142,45 @@ class provider implements
                 ] + $contextparams;
 
         $gprentries = $DB->get_recordset_sql($sql, $params);
+
+        $reviewdata = array();
+        foreach ($gprentries as $gprentry) {
+            $review = array();
+            $review["peerid"]       = $gprentry->peerid;
+            $review["groupid"]      = $gprentry->groupid;
+            $review["userid"]       = $gprentry->userid;
+            $review["reviewerid"]   = $gprentry->reviewerid;
+            $review["grade"]        = $gprentry->grade;
+            $review["comment"]      = $gprentry->comment;
+            $review["timemodified"] = \core_privacy\local\request\transform::datetime($gprentry->timemodified);
+
+            $reviewdata[$gprentry->cmid] = $review;
+        }
+        foreach ($reviewdata as $cmid => $rd) {
+            if (!empty($rd)) {
+                $context = \context_module::instance($cmid);
+                self::export_grouppeerreview_data_for_user($rd, $context, $user);
+            }
+        }
+    }
+
+    /**
+     * Export the supplied personal data for a single grouppeerreview activity.
+     *
+     * @param array $grouppeerreviewdata the personal data to export for the grouppeerreview.
+     * @param \context_module $context the context of the grouppeerreview.
+     * @param \stdClass $user the user record
+     */
+    protected static function export_grouppeerreview_data_for_user(array $grouppeerreviewdata, \context_module $context, \stdClass $user) {
+        // Fetch the generic module data for the choice.
+        $contextdata = helper::get_context_data($context, $user);
+
+        // Merge with choice data and write it.
+        $contextdata = (object)array_merge((array)$contextdata, $grouppeerreviewdata);
+        writer::with_context($context)->export_data([], $contextdata);
+
+        // Write generic module intro files.
+        helper::export_context_files($context, $user);
     }
 
     /**
@@ -158,7 +196,7 @@ class provider implements
         }
 
         if ($cm = get_coursemodule_from_id('grouppeerreview', $context->instanceid)) {
-            $DB->delete_records('grouppeerreview_mark', ['peerid' => $cm->instance]);
+            $DB->delete_records('grouppeerreview_marks', ['peerid' => $cm->instance]);
         }
     }
 
@@ -181,10 +219,8 @@ class provider implements
                 continue;
             }
             $instanceid = $DB->get_field('course_modules', 'instance', ['id' => $context->instanceid], MUST_EXIST);
-            $DB->delete_records('grouppeerreview_mark', ['peerid' => $instanceid, 'userid' => $userid]);
-            $DB->delete_records('grouppeerreview_mark', ['peerid' => $instanceid, 'reviewerid' => $userid]);
+            $DB->delete_records('grouppeerreview_marks', ['peerid' => $instanceid, 'userid' => $userid]);
+            $DB->delete_records('grouppeerreview_marks', ['peerid' => $instanceid, 'reviewerid' => $userid]);
         }
-
-        // WHAT ABOUT GRADEBOOK DATA ???? - DOES THE GRADEBOOK PRIVACY PROVIDER DEAL WITH THIS????
     }
 }
